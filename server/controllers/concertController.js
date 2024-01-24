@@ -1,4 +1,5 @@
-// createConcert, deleteConcert, getConcerts (all, byType, byDate, byVenue), getOneConcertById
+// getConcerts, getOneConcertById, createConcert, deleteConcert
+const ApiError = require('../error/ApiError');
 const Concert = require('../schemas/concertSchema');
 const Ticket = require('../schemas/ticketSchema');
 
@@ -16,7 +17,7 @@ const getConcerts = async(req, res) =>{
             concerts = await Concert.find(query);
         }
         console.log(req.headers);
-        return res.json(concerts);
+        return res.status(200).json(concerts);
     }
     catch (error){
         console.error(error);
@@ -28,7 +29,7 @@ const getOneConcertById = async(req, res) =>{
     try{
         const { id } = req.params
         const concert = await Concert.findById(id);
-        return res.json(concert);
+        return res.status(200).json(concert);
     }
     catch (error){
         console.error(error);
@@ -41,7 +42,7 @@ const createConcert = async(req, res) =>{
     try{
         const { name, description, type, image, price, venue, dateTime } = req.body;
         const concert = await Concert.create({ name, description, type, image, price, venue, dateTime });
-        return res.json({concert})
+        return res.status(200).json({concert})
     }
     catch (error){
         console.error(error);
@@ -49,15 +50,15 @@ const createConcert = async(req, res) =>{
     }
 };
 
-const deleteConcert = async(req, res) =>{
+const deleteConcert = async(req, res, next) =>{
     try{
         const { id } = req.params;
-        const concert = await Concert.findById(id)
+        const concert = await Concert.findById(id);
         if(!concert) {
-            return res.status(404).json(`There are no concerts with id ${id}`)
+            return next(ApiError.badRequest(`There are no concerts with id ${id}`));
         }
         await Concert.deleteOne({_id: id});
-        return res.json("The concert has been removed");
+        return res.status(200).json("The concert has been removed");
     }
     catch (error){
         console.error(error);

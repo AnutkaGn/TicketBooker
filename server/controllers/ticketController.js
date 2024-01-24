@@ -1,12 +1,13 @@
-// createTicket, deleteTicket, getTickets, getTicketsById, bookTicket, bookManyTickets, deleteNotBookedTicket
-const { request } = require('express');
+// getTickets, getTicketsById, createTicket, bookTicket, bookManyTickets, deleteTicket, deleteNotBookedTicket
+const ApiError = require('../error/ApiError');
 const Ticket = require('../schemas/ticketSchema');
 const User = require('../schemas/userSchema');
 
-const getTickets = async (req, res) =>{
+const getTickets = async (req, res, next) =>{
     try{
-        const tickets = await Ticket.find({concertId: req.params.id});
-        return res.json({tickets});
+        const ticket = await Ticket.find({concertId: req.params.id});
+        if (!ticket) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`))
+        return res.status(200).json({ticket});
     }
     catch (error){
         console.error(error);
@@ -18,7 +19,8 @@ const getTicketsById = async (req, res) =>{
     try{
         const {tickets} = req.user;
         const userTickets = await Ticket.find({_id:{$in: tickets}});
-        return res.json({userTickets});
+
+        return res.status(200).json({userTickets});
     }
     catch (error){
         console.error(error);
@@ -30,7 +32,7 @@ const createTicket = async (req, res) =>{
     try{
         const {concertId, row, seat, price, floor} = req.body;
         const newTicket = await Ticket.create({concertId, row, seat, price, floor});
-        return res.json({newTicket})
+        return res.status(200).json({newTicket})
     }
     catch (error){
         console.error(error);
@@ -38,10 +40,11 @@ const createTicket = async (req, res) =>{
     }
 };
 
-const bookTicket = async (req, res) =>{
+const bookTicket = async (req, res, next) =>{
     try{
         const ticket = await Ticket.findByIdAndUpdate(req.params.id, {booked: true}, {new: true});
-        return res.json({ticket})
+        if (!ticket) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`));
+        return res.status(200).json({ticket})
     }
     catch (error){
         console.error(error);
@@ -53,7 +56,7 @@ const bookManyTickets = async (req, res) =>{
     try{
         const {idArray} = req.query;
         const tickets = await Ticket.updateMany({_id:{$in:idArray}}, {booked: true}, {new: true});
-        return res.json({tickets})
+        return res.status(200).json({tickets})
     }
     catch (error){
         console.error(error);
@@ -67,7 +70,7 @@ const deleteTicket = async (req, res) =>{
         await Ticket.findByIdAndDelete(id);
         const user = req.user;
         const { tickets } = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
-        return res.json({tickets});
+        return res.status(200).json({tickets});
     }
     catch (error){
         console.error(error);
