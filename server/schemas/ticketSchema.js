@@ -7,16 +7,12 @@ const ticketSchema = new Schema({
         ref: 'Concert',
         required: true
     },
-    description:{
-        type: String,
-        required: true
-    },
     row:{
-        type: String,
+        type: Number,
         required: true
     },
     seat:{
-        type: String,
+        type: Number,
         required: true
     },
     price:{
@@ -25,11 +21,12 @@ const ticketSchema = new Schema({
     },
     floor:{
         type: String,
+        enum: ['parterre', 'balcony'],
         required: true
     },
     booked:{
         type: Boolean,
-        required: true
+        default: false
     }
 });
 

@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5000;
 
 // Connecting to a MongoDB database
 mongoose.set('strictQuery', true);
-mongoose.connect(process.env.CONNETION_STRING)
+mongoose.connect(process.env.CONNECTION_STRING)
     .then(() => console.log("MongoDB conected..."))
     .catch(err => console.log(err))
 
@@ -16,6 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
 app.use('/api', require('./routes/index'));
+
 
 
 

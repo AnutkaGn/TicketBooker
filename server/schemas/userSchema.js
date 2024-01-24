@@ -19,11 +19,7 @@ const userSchema = new Schema({
         enum: ['ADMIN', 'USER'],
         default: 'USER'
     },
-    basket:[{
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Ticket'
-    }],
-    booked:[{
+    tickets:[{
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Ticket'
     }]
