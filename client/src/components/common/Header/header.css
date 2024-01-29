@@ -1,11 +1,48 @@
 .header{
-    background-color: rgb(195, 195, 195);
-    height: 60px;
+    z-index: 1;
+    position: fixed;
+    height: 65px;
+    width: 100%;
     display: flex;
+    background: #4C382C;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
 }
-.header p{
-    font-size: 20px;
-    font-weight: 900;
-    align-self: center;
+.header__button{
+    width: 30px;
+    height: 30px;
+    margin-left: 40px;
+}
+.header__box-logo-text{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.header__logo{
+    width: 42px;
+    height: 42px;
+}
+.header__text{
+    color: #FFF;
+    text-decoration: none;
+    font-family: "Bruno Ace SC";
+    font-size: 31px;
+    font-weight: 400;
+    margin-left: 15px;
+}
+.header a{
+    text-decoration: none;
+}
+.box-user-basket{
+    display: flex;
+    flex-direction: row;
+    margin-right: 40px;
+
+    width: 90px;
+    justify-content: space-between;
+}
+.box-user-basket__button{
+    width: 33px;
 }

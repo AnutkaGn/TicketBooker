@@ -15,8 +15,7 @@ const ConcertsArray = () => {
 
     console.log(concerts)
     return (
-        <div>
-            <h2>Концерти</h2>
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
             {concerts.map(concert => (
                 <ConcertItem key={concert.id} concert={concert} />
             ))}

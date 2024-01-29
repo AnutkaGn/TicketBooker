@@ -1,0 +1,68 @@
+.wrapper-filtre{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+.filter{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 45px;
+    width: 1008px;
+    height: 120px;
+    background-color: #FDF9F6;
+    border-radius: 10px;
+    border: 1px solid #B4ADA9;
+    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+}
+.filter__checkbox{
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    align-items: center;
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 19px;
+    font-weight: 200;
+    justify-content: space-around;
+    width: 100%;
+}
+.checkbox-one{
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+}
+.checkbox-one > input{
+    width: 18px;
+    color: rgb(0, 0, 0);
+    margin-right: 6px;
+
+}
+.filter__box-place-date{
+    display: flex;
+    flex-direction: row;
+}
+.box-place{
+    color: #000;
+    text-align: center;
+    font-family: "Roboto Slab";
+    font-size: 18px;
+    font-weight: 400;
+}
+.box-place > select{
+    width: 170px;
+    height: 30px;
+    background-color: #FDF9F6;
+    border: none;
+    font-family: "Roboto Slab";
+    font-size: 18px;
+    font-weight: 400;
+}
+.box-date{
+    
+}
+
+
+
+

@@ -1,18 +1,89 @@
 .concert-card{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 45px;
     width: 1008px;
-    height: 292px;
-    flex-shrink: 0;
-    fill: #FDF9F6;
-    stroke: #B4ADA9;
-    stroke-width: 1px;
+    height: 230px;
+    background-color: #FDF9F6;
+    border-radius: 10px;
+    border: 1px solid #B4ADA9;
     filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
 }
 .concert-card__date{
+    display: flex;
+    flex-direction: column;
+    margin: 0 29px;
     color: #000;
     text-align: center;
-    font-family: Heebo;
-    font-size: 25px;
-    font-style: normal;
+    font-size: 20px;
     font-weight: 400;
-    line-height: normal;
+}
+.concert-card > img{
+    width: 180px;
+    height: 230px;
+}
+.concert-wrapper-information{
+    display: flex;
+    flex-direction: column;
+    width: 520px;
+    margin-left: 30px;
+}
+.concert-card__name{
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 22px;
+    font-weight: 700;
+}
+.concert-card__type{
+    color: #000;
+    font-size: 13px;
+    margin-top: -20px;
+}
+.concert-wrapper-venue{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.concert-wrapper-venue > img{
+    width: 25px;
+    height: 25px;
+}
+.concert-card__venue{
+    color: #000;
+    font-size: 18px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+.concert-wrapper-price-and-button{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 520px;
+    justify-content: space-between;
+}
+.concert-wrapper-price{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.concert-wrapper-price > img{
+    width: 25px;
+    height: 25px;
+}
+.concert-card__price{
+    color: #000;
+    font-size: 18px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+.concert-card__button-book{
+    border-radius: 10px;
+    width: 180px;
+    height: 40px;
+    border: none;
+    background: #4C382C;
+    color: #FFF;
+    font-size: 20px;
+    font-weight: 400;
 }
