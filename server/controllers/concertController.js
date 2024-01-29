@@ -1,9 +1,8 @@
 // getConcerts, getOneConcertById, createConcert, deleteConcert
 const ApiError = require('../error/ApiError');
 const Concert = require('../schemas/concertSchema');
-const Ticket = require('../schemas/ticketSchema');
 
-const getConcerts = async(req, res) =>{
+const getConcerts = async(req, res, next) =>{
     try{
         let concerts = []
         let { type, date, venue } = req.query;
@@ -16,7 +15,6 @@ const getConcerts = async(req, res) =>{
             if (venue) query.venue = venue;
             concerts = await Concert.find(query);
         }
-        console.log(req.headers);
         return res.status(200).json(concerts);
     }
     catch (error){
@@ -25,10 +23,11 @@ const getConcerts = async(req, res) =>{
     }
 };
 
-const getOneConcertById = async(req, res) =>{
+const getOneConcertById = async(req, res, next) =>{
     try{
         const { id } = req.params
         const concert = await Concert.findById(id);
+        if (!concert) return next(ApiError.badRequest(`Concert with ID ${id} not found`))
         return res.status(200).json(concert);
     }
     catch (error){

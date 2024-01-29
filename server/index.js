@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const errorHandler = require('./middleware/errorHandlingMiddleware')
+const errorHandler = require('./middleware/errorHandlingMiddleware');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,7 +14,7 @@ mongoose.connect(process.env.CONNECTION_STRING)
     .then(() => console.log("MongoDB conected..."))
     .catch(err => console.log(err))
 
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 

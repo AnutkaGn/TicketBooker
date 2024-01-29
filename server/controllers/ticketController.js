@@ -6,7 +6,7 @@ const User = require('../schemas/userSchema');
 const getTickets = async (req, res, next) =>{
     try{
         const ticket = await Ticket.find({concertId: req.params.id});
-        if (!ticket) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`))
+        if (!ticket) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`));
         return res.status(200).json({ticket});
     }
     catch (error){
@@ -15,11 +15,11 @@ const getTickets = async (req, res, next) =>{
     }
 };
 
-const getTicketsById = async (req, res) =>{
+const getTicketsById = async (req, res, next) =>{
     try{
         const {tickets} = req.user;
         const userTickets = await Ticket.find({_id:{$in: tickets}});
-
+        if (!userTickets) return next(ApiError.badRequest(`Ticket with ID ${tickets} not found`));
         return res.status(200).json({userTickets});
     }
     catch (error){

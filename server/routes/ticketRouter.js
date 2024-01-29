@@ -13,6 +13,7 @@ router.post('/', authMiddleware, ticketController.createTicket);
 router.put('/:id', authMiddleware, ticketController.bookTicket);
 // Book tickets ([booked: true])
 router.put('/', authMiddleware, ticketController.bookManyTickets);
+// Delete ticket from database
 router.delete('/:id', authMiddleware, ticketController.deleteTicket);
 
 module.exports = router;
