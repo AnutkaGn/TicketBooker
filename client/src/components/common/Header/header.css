@@ -1,0 +1,11 @@
+.header{
+    background-color: rgb(195, 195, 195);
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+}
+.header p{
+    font-size: 20px;
+    font-weight: 900;
+    align-self: center;
+}

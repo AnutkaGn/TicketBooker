@@ -1,0 +1,18 @@
+.concert-card{
+    width: 1008px;
+    height: 292px;
+    flex-shrink: 0;
+    fill: #FDF9F6;
+    stroke: #B4ADA9;
+    stroke-width: 1px;
+    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+}
+.concert-card__date{
+    color: #000;
+    text-align: center;
+    font-family: Heebo;
+    font-size: 25px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
