@@ -3,35 +3,29 @@
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
-}
-.filter{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 45px;
-    width: 1008px;
-    height: 120px;
-    background-color: #FDF9F6;
-    border-radius: 10px;
-    border: 1px solid #B4ADA9;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+    margin-bottom: 30px;
 }
 .filter__checkbox{
     display: flex;
     flex-direction: row;
-    height: 50px;
+    justify-content: space-around;
     align-items: center;
-    color: #000;
+    height: 55px;
+    width: 1008px;
+    color: white;
     font-family: "Roboto Slab";
     font-size: 19px;
     font-weight: 200;
-    justify-content: space-around;
-    width: 100%;
+    
+    background-color: #4C382C;
+    border-radius: 10px;
+    border: 1px solid #B4ADA9;
 }
 .checkbox-one{
     display: flex;
     flex-direction: row;
-    text-align: center;
+    align-items: center;
+    justify-content: space-evenly;
 }
 .checkbox-one > input{
     width: 18px;
@@ -42,6 +36,9 @@
 .filter__box-place-date{
     display: flex;
     flex-direction: row;
+    width: 1008px;
+    margin-top: 10px;
+    justify-content: space-between;
 }
 .box-place{
     color: #000;
@@ -59,9 +56,7 @@
     font-size: 18px;
     font-weight: 400;
 }
-.box-date{
-    
-}
+
 
 
 
