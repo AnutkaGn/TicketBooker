@@ -1,4 +1,4 @@
-.ticket-card{
+.user-ticket-card{
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -10,7 +10,7 @@
     border: 1px solid #B4ADA9;
     filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
 }
-.ticket-card__date{
+.user-ticket-card__date{
     display: flex;
     flex-direction: column;
     margin: 0 29px;
@@ -19,33 +19,33 @@
     font-size: 20px;
     font-weight: 400;
 }
-.ticket-card > img{
+.user-ticket-card > img{
     height: 180px;
 }
-.ticket-wrapper-information{
+.user-ticket-wrapper-information{
     display: flex;
     flex-direction: column;
     width: 680px;
     margin-left: 30px;
 }
-.ticket-card__floor-row-seat{
+.user-ticket-card__floor-row-seat{
     color: #000;
     font-size: 18px;
     margin-top: 30px;
 }
-.ticket-card__name{
+.user-ticket-card__name{
     color: #000;
     font-family: "Roboto Slab";
     font-size: 20px;
     font-weight: 700;
     margin-top: 0px;
 }
-.ticket-card__type{
+.user-ticket-card__type{
     color: #000;
     font-size: 13px;
     margin-top: -20px;
 }
-.ticket-card__venue{
+.user-ticket-card__venue{
     color: #000;
     font-size: 16px;
     font-weight: 400;

@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import LogIn from './components/LogIn/LogIn';
 import SignUp from './components/SignUp/SignUp';
 import UserPage from './components/UserPage/UserPage';
+import BasketPage from './components/BasketPage/BasketPage';
 
 function App() {
   return (
@@ -10,10 +11,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path='/' element={ <HomePage/> }/>
-          <Route path='/about' element={<div>This page about concert</div>}/>
           <Route path='/logIn' element={<LogIn/>}/>
           <Route path='/signUp' element={<SignUp/>}/>
           <Route path='/user' element={<UserPage/>}/>
+          <Route path='/basket' element={<BasketPage/>}/>
         </Routes>
       </BrowserRouter>
     </div>

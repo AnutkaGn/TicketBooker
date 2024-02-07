@@ -1,0 +1,51 @@
+.basket-item-wrapper{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+.basket-item__image-ticket{
+    width: 60px;
+    height: 60px;
+    transform: rotate(45deg);
+    margin-left: 70px;
+
+}
+.basket-item__image-cancel{
+    width: 35px;
+    height: 35px;
+    margin-right: 70px;
+}
+.basket-item__main-information{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 500px;
+}
+.main-information__floor-row-seat{
+    color: #000;
+    font-size: 18px;
+    font-weight: 400;
+}
+.main-information__name{
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 17px;
+    font-weight: 700;
+    margin-top: -7px;
+}
+.main-information__date-venue{
+    color: #000;
+    font-size: 15px;
+    font-weight: 400;
+    margin-top: -7px;    
+}
+.basket-item__box-price{
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 20px;
+    font-weight: 600;
+}
+.basket-line{
+    width: 900px;
+}

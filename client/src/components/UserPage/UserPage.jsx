@@ -1,6 +1,6 @@
 import React from 'react';
 import Header from '../common/Header/Header';
-import UserTicket from './UserTicket/UserTicket'
+import UserTicketsArray from './UserTicketsArray/UserTicketsArray'
 import './userPage.css';
 
 const UserPage = () => {
@@ -9,7 +9,7 @@ const UserPage = () => {
             <Header/>
             <div style={{marginTop:'100px'}}></div>
             <p className='user-page__text'>Ваші заброньовані квиточки чекають вас!</p>
-            <UserTicket/>
+            <UserTicketsArray/>
             <p className='user-page__text'>Спогади! Ви відвідували ці заходи</p>
         </div>
     );

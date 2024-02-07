@@ -1,0 +1,35 @@
+.basket-tickets{
+    display: flex;
+    flex-direction: column;
+    width: 1008px;
+    height: auto;
+    background-color: #FDF9F6;
+    border-radius: 10px;
+    border: 1px solid #B4ADA9;
+    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+}
+.basket-tickets__box-button-price{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin: 20px 0;
+}
+.basket-tickets__box-button-price > a > input{
+    border-radius: 10px;
+    width: 180px;
+    height: 40px;
+    border: none;
+    background: #4C382C;
+    color: #FFF;
+    font-size: 20px;
+    font-weight: 400;
+    margin-left: 30px;
+}
+.basket-tickets__box-button-price > p{
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 20px;
+    font-weight: 600;
+}
+
