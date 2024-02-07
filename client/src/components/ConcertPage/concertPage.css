@@ -1,0 +1,9 @@
+.wrapper-concert-page{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.concert-line{
+    margin-top: 50px;
+    width: 85%;
+}

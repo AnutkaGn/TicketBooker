@@ -1,0 +1,67 @@
+.about-concert{
+    display: flex;
+    flex-direction: row;
+    width: 1100px;
+    height: auto;
+}
+.about-concert > img{
+    width: 240px;
+    height: 310px;
+}
+.about-concert__wrapper-information{
+    display: flex;
+    flex-direction: column;
+    width: 650px;
+    margin-left: 70px;
+}
+.about-concert__date{
+    color: #000;
+    font-size: 18px;
+    font-weight: 400;
+    margin-top: 0;
+}
+.about-concert__name{
+    color: #000;
+    font-family: "Roboto Slab";
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 0;
+}
+.about-concert__description{
+    color: #000;
+    font-size: 17px;
+    font-weight: 400;
+    margin-top: 0;
+}
+.about-concert__wrapper-venue{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+}
+.about-concert__wrapper-venue > img{
+    width: 25px;
+    height: 25px;
+}
+.about-concert__wrapper-venue > p{
+    color: #000;
+    font-size: 17px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+.about-concert__wrapper-price{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0; 
+}
+.about-concert__wrapper-price > img{
+    width: 25px;
+    height: 25px;
+}
+.about-concert__wrapper-price > p{
+    color: #000;
+    font-size: 17px;
+    font-weight: 500;
+    margin-left: 8px;
+}
