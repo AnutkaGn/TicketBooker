@@ -24,7 +24,7 @@ const ConcertItem = ({concert}) => {
                         <img src="assets/wallet.png" alt="wallet"/>
                         <p className='concert-card__price'>{concert.price} грн</p>
                     </div>
-                        <a href=""><input className='concert-card__button-book' type="button" value="Забронювати"/></a>
+                        <a href="/concert"><input className='concert-card__button-book' type="button" value="Забронювати"/></a>
                 </div>
             </div>
         </div>
