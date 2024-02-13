@@ -2,10 +2,12 @@ import React from 'react';
 import moment from 'moment';
 import 'moment/locale/uk';
 import './concertItem.css';
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 
 const ConcertItem = ({concert}) => {
-
+    const navigate = useNavigate();
     const formattedDate = moment(concert.dateTime).locale('uk').format('D MMMM HH:mm');
     const dateParts = formattedDate.split(' ');
     return (
@@ -24,7 +26,7 @@ const ConcertItem = ({concert}) => {
                         <img src="assets/wallet.png" alt="wallet"/>
                         <p className='concert-card__price'>{concert.price} грн</p>
                     </div>
-                        <a href="/concert"><input className='concert-card__button-book' type="button" value="Забронювати"/></a>
+                       <Link to={`/concert/${concert._id}`}><input className='concert-card__button-book' type="button" value="Забронювати"/></Link> 
                 </div>
             </div>
         </div>
