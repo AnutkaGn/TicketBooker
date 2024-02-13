@@ -5,13 +5,13 @@ const Concert = require('../schemas/concertSchema');
 const getConcerts = async(req, res, next) =>{
     try{
         let concerts = []
-        let { type, date, venue } = req.query;
-        if (!type && !date && !venue){
+        let { type, dateTime, venue } = req.query;
+        if (!type && !dateTime && !venue){
             concerts = await Concert.find();
         } else {
             const query = {};
             if (type) query.type = type;
-            if (date) query.date = date;
+            if (dateTime) query.dateTime = { $gte: new Date(dateTime), $lt: new Date(new Date(dateTime).getFullYear(), new Date(dateTime).getMonth(),new Date(dateTime).getDate()+1)};
             if (venue) query.venue = venue;
             concerts = await Concert.find(query);
         }

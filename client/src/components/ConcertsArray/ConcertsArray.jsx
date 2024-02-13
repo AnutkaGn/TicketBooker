@@ -1,26 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import ConcertItem from './ConcertItem/ConcertItem';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import {observer} from 'mobx-react-lite';
+import { Context } from '../..';
 
-const ConcertsArray = () => {
-    const [concerts, setConcerts] = useState([]);
 
-    useEffect(() => {
-        axios.get('http://localhost:5000/api/concert')
-        .then(response => setConcerts(response.data))
-        .catch(error => console.error('Помилка при отриманні даних:', error));
-    }, []);
- 
-
-    console.log(concerts)
+const ConcertsArray = observer(() => {
+    const {user} = useContext(Context);
     return (
         <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-            {concerts.map(concert => (
-                <ConcertItem key={concert.id} concert={concert} />
+            {user.concerts.map(concert => (
+                <ConcertItem key={concert._id} concert={concert} />
             ))}
         </div>
     );
-}
+});
 
 export default ConcertsArray;
