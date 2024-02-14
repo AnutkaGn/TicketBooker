@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import ConcertItem from './ConcertItem/ConcertItem';
 import {observer} from 'mobx-react-lite';
-import { Context } from '../..';
+import { Context } from '../../..';
 
 
 const ConcertsArray = observer(() => {

@@ -13,7 +13,6 @@ const Header = () => {
                 <img className='box-user-basket__button' src="assets/user.png" alt="user"/>
                 <img className='box-user-basket__button' src="assets/backet.png" alt="backet"/>
             </div>
-
         </div>
     );
 }

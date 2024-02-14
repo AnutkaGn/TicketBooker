@@ -39,7 +39,6 @@
     display: flex;
     flex-direction: row;
     margin-right: 40px;
-
     width: 90px;
     justify-content: space-between;
 }

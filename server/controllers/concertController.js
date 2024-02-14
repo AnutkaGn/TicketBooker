@@ -2,7 +2,7 @@
 const ApiError = require('../error/ApiError');
 const Concert = require('../schemas/concertSchema');
 
-const getConcerts = async(req, res, next) =>{
+const getConcerts = async(req, res) =>{
     try{
         let concerts = []
         let { type, dateTime, venue } = req.query;

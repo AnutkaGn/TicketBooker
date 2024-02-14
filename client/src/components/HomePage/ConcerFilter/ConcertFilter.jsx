@@ -5,9 +5,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; 
 import Checkbox from '@mui/material/Checkbox';
-import axios from 'axios';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../..';
+import { Context } from '../../..';
+import { getConcerts } from '../../../http/concertAPI';
 
 const ConcertFilter = observer(() => {
     const {user} = useContext(Context);
@@ -33,13 +33,11 @@ const ConcertFilter = observer(() => {
         if (showType) typesArray.push('show');
         if (theatreType) typesArray.push('theatre');
         if (kidsType) typesArray.push('kids');
-        axios.get('http://localhost:5000/api/concert', {params:{
-            type: typesArray,
-            dateTime: date,
-            venue,
-        }})
-        .then(response => user.concerts = response.data)
-        .catch(error => console.error('Помилка при отриманні даних:', error));
+        const fetchData = async () => {
+            const data = await getConcerts(typesArray, date, venue);
+            user.concerts = data;
+        }
+        fetchData();
     }, [concertType, comedyType, showType, theatreType, kidsType, venue, date]);
     
 
