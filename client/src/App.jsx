@@ -4,6 +4,7 @@ import UserPage from './components/UserPage/UserPage';
 import BasketPage from './components/BasketPage/BasketPage';
 import ConcertPage from './components/ConcertPage/ConcertPage';
 import AuthPage from './components/AuthPage/AuthPage';
+import HallFilarmoniya from './components/HallFilarmoniya/HallFilarmoniya';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path='/user' element={ <UserPage/> }/>
           <Route path='/basket' element={ <BasketPage/> }/>
           <Route path='/concert/:id' element={ <ConcertPage/> }/>
+          <Route path='/fila' element={ <HallFilarmoniya/> }/>
         </Routes>
       </BrowserRouter>
     </div>

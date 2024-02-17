@@ -3,7 +3,7 @@ const router = express.Router();
 const ticketController = require('../controllers/ticketController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Get ticket by concert ID
+// Get tickets by concert ID
 router.get('/:id', ticketController.getTickets);
 // Get tickets by array of ID
 router.get('/', authMiddleware, ticketController.getTicketsById);

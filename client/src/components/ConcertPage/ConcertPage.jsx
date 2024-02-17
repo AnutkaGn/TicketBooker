@@ -6,21 +6,26 @@ import { useParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { Context } from '../..';
 import { getAboutConcert } from '../../http/concertAPI';
+import HallFilarmoniya from '../HallFilarmoniya/HallFilarmoniya';
 
 const ConcertPage = observer(() => {
     const {user} = useContext(Context);
     const {id} = useParams();
     useEffect(() => {
-        const data = getAboutConcert(id);
-        user.aboutConcert = data;
+        const fetchAboutConcert = async () =>{
+            const data = await getAboutConcert(id);
+            user.aboutConcert = data;
+        }
+        fetchAboutConcert();
     }, [])
-    return (
+    if (!Object.values(user.aboutConcert).length) return(<p>Завантаження...</p>)
+    else return (
         <div className='wrapper-concert-page'>
             <Header/>
             <div style={{height: '110px'}}></div>
             <AboutConcert/>
             <hr className='concert-line'/>
-            
+            <HallFilarmoniya/>
         </div>
     );
 });

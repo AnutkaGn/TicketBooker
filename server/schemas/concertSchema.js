@@ -19,7 +19,7 @@ const concertSchema = new Schema({
         required: true
     },
     price:{
-        type: String,
+        type: Array,
         required: true
     },
     venue:{

@@ -22,9 +22,7 @@ const LogIn = observer(() => {
         if (isValid){
             try {
                 const {login, email, role, tickets, message} = await logIn(loginRef.current.value, passwordRef.current.value);
-                console.log(login, email, role, tickets, message)
-                if(!message) {
-                    console.log(message);
+                if(message) {
                     setError(message);
                     return;
                 }
@@ -53,8 +51,10 @@ const LogIn = observer(() => {
                     <input onChange={() => checkPassword()} ref={passwordRef} id='password' type="password" placeholder='Введіть пароль'/>
                     {!isValid && <span style={{color: 'red', fontSize: '14px', marginTop: '3px', width: "300px"}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
                 </div>
-                {error && <span style={{color: 'red', fontSize: '14px', width: '300px'}}>{error}</span>}
-                <button onClick={() => handleClick()} className='logIn-button'>Log In</button>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: '40px'}}>
+                    {error && <span style={{color: 'red', fontSize: '16px', marginBottom: '30px'}}>{error}</span>}
+                    <button onClick={() => handleClick()} className='logIn-button'>Log In</button>
+                </div>
                 <div className='logIn__box-signUp'>
                     <p>Don't have an account?</p>
                     <p style={{textDecoration: 'underline', fontSize: '20px', cursor: 'pointer'}} onClick={() => user.isLogin = false}>Sign Up</p>

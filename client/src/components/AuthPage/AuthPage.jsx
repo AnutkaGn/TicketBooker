@@ -10,7 +10,7 @@ const AuthPage = observer(() => {
 
     return (
         <div style={{height: '100%'}}>
-            <Header />
+            <Header isAuth={true}/>
             {user.isLogin ? <LogIn /> : <SignUp />}
         </div>
     );

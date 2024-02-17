@@ -6,6 +6,6 @@ export const getConcerts = async (type, dateTime, venue) => {
 }
 
 export const getAboutConcert = async (id) => {
-    const {data} = $host.get(`concert/${id}`);
+    const {data} = await $host.get(`concert/${id}`);
     return data;
 } 

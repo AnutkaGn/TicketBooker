@@ -5,9 +5,9 @@ const User = require('../schemas/userSchema');
 
 const getTickets = async (req, res, next) =>{
     try{
-        const ticket = await Ticket.find({concertId: req.params.id});
-        if (!ticket) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`));
-        return res.status(200).json({ticket});
+        const tickets = await Ticket.find({concertId: req.params.id});
+        if (!tickets) return next(ApiError.badRequest(`Ticket with ID ${req.params.id} not found`));
+        return res.status(200).json({tickets});
     }
     catch (error){
         console.error(error);

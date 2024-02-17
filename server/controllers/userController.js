@@ -16,10 +16,10 @@ const signUpUser = async(req, res, next) =>{
     try{
         const {login, password, email, role} = req.body;
         //Check if user already exists
-        const userLogin = await User.findOne({login});
-        if (userLogin) return next(ApiError.badRequest("User with this login already exists"));
         const userEmail = await User.findOne({email});
         if (userEmail) return next(ApiError.badRequest("User with this email already exists"));
+        const userLogin = await User.findOne({login});
+        if (userLogin) return next(ApiError.badRequest("User with this login already exists"));
         
         const hashedPassword = await bcrypt.hash(password, 5);
         const newUser = await User.create({login, password: hashedPassword, email, role});

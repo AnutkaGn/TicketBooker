@@ -10,6 +10,7 @@ const ConcertItem = ({concert}) => {
     const navigate = useNavigate();
     const formattedDate = moment(concert.dateTime).locale('uk').format('D MMMM HH:mm');
     const dateParts = formattedDate.split(' ');
+    console.log(concert.price)
     return (
         <div className='concert-card'>
             <div className='concert-card__date'><span>{dateParts[0]}</span><span>{dateParts[1]}</span><span>{dateParts[2]}</span></div>
@@ -24,7 +25,7 @@ const ConcertItem = ({concert}) => {
                 <div className='concert-wrapper-price-and-button'>
                     <div className='concert-wrapper-price'>
                         <img src="assets/wallet.png" alt="wallet"/>
-                        <p className='concert-card__price'>{concert.price} грн</p>
+                        <p className='concert-card__price'>{concert.price[0]} - {concert.price[7]} грн</p>
                     </div>
                        <Link to={`/concert/${concert._id}`}><input className='concert-card__button-book' type="button" value="Забронювати"/></Link> 
                 </div>
