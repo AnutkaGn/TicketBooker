@@ -26,6 +26,14 @@ const ConcertPage = observer(() => {
             <AboutConcert/>
             <hr className='concert-line'/>
             <HallFilarmoniya/>
+            {user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length ? (
+                <div className='wrapper-add-to-basket'>
+                <button className='add-to-basket__button'>Перейти до корзини</button>
+                <div className='add-to-basket__footer'>
+                    <p>{`Сума (${user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length}шт.): ${user.ticketsToBook.reduce((sum, ticket) => !ticket.booked && ticket.concertId === id ? Number(sum) + Number(ticket.price): 0, 0)} грн`}</p>
+                </div>
+                </div>
+            ):(<></>)}
         </div>
     );
 });

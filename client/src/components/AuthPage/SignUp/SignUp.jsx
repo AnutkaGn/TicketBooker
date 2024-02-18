@@ -38,7 +38,7 @@ const SignUp = observer(() => {
                 user.login = login;
                 user.email = email;
                 user.role = role;
-                user.tickets = tickets;
+                user.userTickets = tickets;
                 navigate('/');
             } catch (error) {
                 console.error(error);

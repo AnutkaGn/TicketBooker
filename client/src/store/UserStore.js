@@ -8,7 +8,8 @@ export class UserStore{
         this._login = '';
         this._email = '';
         this._role = '';
-        this._tickets = [];
+        this._ticketsToBook = [];
+        this._userTickets = [];
         makeAutoObservable(this);
     }
     get concerts(){
@@ -36,7 +37,7 @@ export class UserStore{
         this._login = value
     }
     get email(){
-        return this._email;
+        return this._email
     }
     set email(value){
         this._email = value
@@ -47,10 +48,30 @@ export class UserStore{
     set role(value){
         this._role = value
     }
-    get tickets(){
-        return this._tickets
+    get userTickets(){
+        return this._userTickets
     }
-    set tickets(value){
-        this._tickets = value
+    set userTickets(value){
+        this._userTickets = value
+    }
+    get ticketsToBook(){
+        return this._ticketsToBook
+    }
+    set ticketsToBook(value){
+        this._ticketsToBook = value
+    }
+    includesTicketToBook(ticket){
+        return JSON.parse(JSON.stringify(this._ticketsToBook)).some(ticketToBook => ticket.row === ticketToBook.row && ticket.seat === ticketToBook.seat && ticket.floor === ticketToBook.floor)
+    }
+    getTicketPrice(ticket){
+        return JSON.parse(JSON.stringify(this._ticketsToBook)).filter(ticketToBook => ticket.row === ticketToBook.row && ticket.seat === ticketToBook.seat && ticket.floor === ticketToBook.floor)[0].price
+    }
+    deleteTicket(ticket){
+        this._ticketsToBook = JSON.parse(JSON.stringify(this._ticketsToBook)).filter(ticketToBook => JSON.stringify(ticketToBook) !== JSON.stringify(ticket))
+        this._userTickets = JSON.parse(JSON.stringify(this._userTickets)).filter(userTicket => userTicket !== ticket._id)
+
+    }
+    includesTicketId(id){
+        return JSON.parse(JSON.stringify(this._userTickets)).some(userTicket => id === userTicket)
     }
 };

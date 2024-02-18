@@ -2,15 +2,12 @@ import React from 'react';
 import moment from 'moment';
 import 'moment/locale/uk';
 import './concertItem.css';
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 
 const ConcertItem = ({concert}) => {
-    const navigate = useNavigate();
     const formattedDate = moment(concert.dateTime).locale('uk').format('D MMMM HH:mm');
     const dateParts = formattedDate.split(' ');
-    console.log(concert.price)
     return (
         <div className='concert-card'>
             <div className='concert-card__date'><span>{dateParts[0]}</span><span>{dateParts[1]}</span><span>{dateParts[2]}</span></div>

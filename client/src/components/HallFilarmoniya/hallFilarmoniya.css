@@ -1,0 +1,11 @@
+.wrapper-svg-filarmoniya{
+    position: relative;
+    overflow: hidden;
+    height: 800px;
+    width: 100%;
+}
+.wrapper-svg-filarmoniya > svg{
+    position: absolute;
+    top: -150px;
+    left: 25%;
+}

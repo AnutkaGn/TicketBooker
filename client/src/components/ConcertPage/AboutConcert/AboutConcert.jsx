@@ -7,7 +7,6 @@ import moment from 'moment'
 const AboutConcert = observer(() => {
     const {user} = useContext(Context);
     const price = user.aboutConcert.price;
-    console.log(price)
     return (
         <div className='about-concert'>
             <img src="assets/poster.png" alt="poster"/>

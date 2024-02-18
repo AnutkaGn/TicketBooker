@@ -12,9 +12,17 @@ export const createTicket = async(ticket) =>{
 export const getTickets = async(id) =>{
     try{
         const {data} = await $host.get(`ticket/${id}`);
-        return data
+        return data;
     }
     catch(error){
+        return error.response.data;
+    }
+}
+export const deleteTicket = async(id) =>{
+    try {
+        const {data} = await $authHost.delete(`ticket/${id}`)
+        return data;
+    } catch (error) {
         return error.response.data;
     }
 }
