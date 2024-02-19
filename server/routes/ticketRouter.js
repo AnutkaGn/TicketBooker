@@ -4,9 +4,13 @@ const ticketController = require('../controllers/ticketController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Get tickets by concert ID
-router.get('/:id', ticketController.getTickets);
+router.get('/concertId/:id', ticketController.getTickets);
 // Get tickets by array of ID
 router.get('/', authMiddleware, ticketController.getTicketsById);
+// Get ticket id by concertId, row, seat and floor
+router.get('/getId', authMiddleware, ticketController.getTicketId);
+// Get ticket price by id
+router.get('/getPrice', authMiddleware, ticketController.getTicketPrice);
 // Create ticket
 router.post('/', authMiddleware, ticketController.createTicket);
 // Book ticket (booked: true)

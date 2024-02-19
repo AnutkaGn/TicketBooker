@@ -28,6 +28,30 @@ const getTicketsById = async (req, res, next) =>{
     }
 };
 
+const getTicketId = async (req, res, next) => {
+    try {
+        const { concertId, seat, row, floor } = req.query;
+        const ticket = await Ticket.findOne({concertId: concertId, row: row, seat: seat, floor: floor});
+        if (!ticket) return next(ApiError.badRequest(`Ticket  not found`));
+        return res.status(200).json({id: ticket._id});
+    } catch (error) {
+        console.error(error);
+        return res.status(500);
+    }
+}
+
+const getTicketPrice = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+        const ticket = await Ticket.findById(id);
+        if (!ticket) return next(ApiError.badRequest(`Ticket  not found`));
+        return res.status(200).json({price: ticket.price});
+    } catch (error) {
+        console.error(error);
+        return res.status(500);
+    }
+}
+
 const createTicket = async (req, res) =>{
     try{
         const {concertId, row, seat, price, floor} = req.body;
@@ -66,10 +90,11 @@ const bookManyTickets = async (req, res) =>{
 
 const deleteTicket = async (req, res) =>{
     try{
-        const { id } = req.params.id;
-        await Ticket.findByIdAndDelete(id);
+        const { id } = req.params;
+        const result = await Ticket.findByIdAndDelete(id);
         const user = req.user;
         const { tickets } = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
+        console.log(id, result, tickets);
         return res.status(200).json({tickets});
     }
     catch (error){
@@ -87,6 +112,8 @@ const deleteNotBookedTicket = async () =>{
 module.exports = {
     getTickets,
     getTicketsById,
+    getTicketId,
+    getTicketPrice,
     createTicket,
     bookTicket,
     deleteTicket,

@@ -1,9 +1,42 @@
 .wrapper-concert-page{
     display: flex;
     flex-direction: column;
-    align-items: center;
+    width: 100%;
 }
 .concert-line{
     margin-top: 50px;
     width: 85%;
+}
+.wrapper-add-to-basket{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.add-to-basket__button{
+    border-radius: 10px;
+    width: 250px;
+    height: 42px;
+    border: none;
+    background: #4C382C;
+    color: #FFF;
+    font-size: 18px;
+    font-weight: 400;
+    cursor: pointer;
+    margin-bottom: 40px;
+}
+.add-to-basket__footer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: 80px;
+    align-items: center;
+    background-color: #77685F;
+}
+.add-to-basket__footer > p{
+    color: #FFF;
+    font-size: 18px;
+    font-weight: 500;
 }

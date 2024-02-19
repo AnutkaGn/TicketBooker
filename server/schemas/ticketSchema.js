@@ -16,8 +16,7 @@ const ticketSchema = new Schema({
         required: true
     },
     price:{
-        type: Number,
-        required: true
+        type: Number
     },
     floor:{
         type: String,

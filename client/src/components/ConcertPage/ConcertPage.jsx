@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { Context } from '../..';
 import { getAboutConcert } from '../../http/concertAPI';
 import HallFilarmoniya from '../HallFilarmoniya/HallFilarmoniya';
+import PriceForConcert from './PriceForConcert/PriceForConcert';
 
 const ConcertPage = observer(() => {
     const {user} = useContext(Context);
@@ -25,13 +26,17 @@ const ConcertPage = observer(() => {
             <div style={{height: '110px'}}></div>
             <AboutConcert/>
             <hr className='concert-line'/>
-            <HallFilarmoniya/>
+            <div style={{display:'flex', flexDirection:'row'}}>
+                <HallFilarmoniya/>
+                <PriceForConcert/>
+            </div>
+            
             {user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length ? (
                 <div className='wrapper-add-to-basket'>
-                <button className='add-to-basket__button'>Перейти до корзини</button>
-                <div className='add-to-basket__footer'>
-                    <p>{`Сума (${user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length}шт.): ${user.ticketsToBook.reduce((sum, ticket) => !ticket.booked && ticket.concertId === id ? Number(sum) + Number(ticket.price): 0, 0)} грн`}</p>
-                </div>
+                    <button className='add-to-basket__button'>Перейти до корзини</button>
+                    <div className='add-to-basket__footer'>
+                        <p>{`Сума (${user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length}шт.): ${user.ticketsToBook.reduce((sum, ticket) => !ticket.booked && ticket.concertId === id ? Number(sum) + Number(ticket.price): 0, 0)} грн`}</p>
+                    </div>
                 </div>
             ):(<></>)}
         </div>

@@ -15,7 +15,7 @@ const Header = ({isAuth}) => {
             </div>
             {!isAuth &&
             <div className='box-user-basket'>
-                <img className='box-user-basket__button' src="assets/user.png" alt="user" />
+                <a href="/auth"><img className='box-user-basket__button' src="assets/user.png" alt="user" /></a>
                 <img className='box-user-basket__button' src="assets/backet.png" alt="backet"/>
             </div>
             }

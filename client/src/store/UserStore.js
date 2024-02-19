@@ -68,8 +68,6 @@ export class UserStore{
     }
     deleteTicket(ticket){
         this._ticketsToBook = JSON.parse(JSON.stringify(this._ticketsToBook)).filter(ticketToBook => JSON.stringify(ticketToBook) !== JSON.stringify(ticket))
-        this._userTickets = JSON.parse(JSON.stringify(this._userTickets)).filter(userTicket => userTicket !== ticket._id)
-
     }
     includesTicketId(id){
         return JSON.parse(JSON.stringify(this._userTickets)).some(userTicket => id === userTicket)
