@@ -23,6 +23,16 @@ export const logIn = async (login, password) => {
     }
 }
 
+export const check = async () => {
+    try {
+        const { data } = await $authHost.get('user/');
+        localStorage.setItem('token', data.token);
+        return jwtDecode(data.token)
+    } catch(error) {
+        return error.response.data;
+    }
+}
+
 export const addToTickets = async (id) => {
     const {data} = await $authHost.post('user/add', { id });
     localStorage.setItem('token', data.token);

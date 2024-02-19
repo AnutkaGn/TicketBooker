@@ -27,7 +27,7 @@ const signUpUser = async(req, res, next) =>{
         return res.status(200).json({token});
     }
     catch (error){
-        console.log(error);
+        console.error(error);
         return res.status(500);
     }
 };
@@ -43,11 +43,18 @@ const logInUser = async(req, res, next) =>{
         return res.status(200).json({token});
     }
     catch (error){
-        console.log(error);
         return res.status(500);
     }
 };
+const check = async(req, res) => {
+    try {
+        const token = generateToken(req.user);
+        return res.status(200).json({ token });
+    } catch (error) {
+        return res.status(500);
+    }
 
+}
 const addToTickets = async(req, res) =>{
     try{
         const { id } = req.body;
@@ -57,7 +64,7 @@ const addToTickets = async(req, res) =>{
         return res.status(200).json({ token });
     }
     catch (error){
-        console.log(error);
+        console.error(error);
         return res.status(500);
     }
 };
@@ -71,7 +78,7 @@ const deleteFromTickets = async(req, res) =>{
         return res.status(200).json({ token });
     }
     catch (error){
-        console.log(error);
+        console.error(error);
         return res.status(500);
     }
 };
@@ -79,6 +86,7 @@ const deleteFromTickets = async(req, res) =>{
 module.exports={
     signUpUser, 
     logInUser, 
+    check,
     addToTickets, 
     deleteFromTickets
 }

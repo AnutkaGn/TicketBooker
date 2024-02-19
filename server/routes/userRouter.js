@@ -7,6 +7,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.post('/signUp', userController.signUpUser);
 // LogIn user
 router.post('/logIn', userController.logInUser);
+// Check is user authorised
+router.get('/', authMiddleware, userController.check);
 // Add tickets to the array of user tickets (basket)
 router.post('/add', authMiddleware, userController.addToTickets);
 // Delete tickets from the array of user tickets (basket)

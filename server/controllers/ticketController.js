@@ -94,7 +94,6 @@ const deleteTicket = async (req, res) =>{
         const result = await Ticket.findByIdAndDelete(id);
         const user = req.user;
         const { tickets } = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
-        console.log(id, result, tickets);
         return res.status(200).json({tickets});
     }
     catch (error){
