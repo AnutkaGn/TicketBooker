@@ -1,13 +1,22 @@
-import React, {useContext, useRef, useEffect} from 'react';
+import React, {useContext, useRef, useEffect, useState} from 'react';
 import './hallFilarmoniya.css';
 import { observer } from 'mobx-react-lite';
 import { Context } from '../..';
 import { createTicket, getTickets, deleteTicket, getTicketId, getTicketPrice } from '../../http/ticketAPI';
 import { addToTickets } from '../../http/userAPI';
+// import Tooltip from './Tooltip';
 
 const HallFilarmoniya = observer(() => {
   const {user} = useContext(Context);
+  // const [seat, setSeat] = useState('');
+  // const [row, setRow] = useState('');
+  // const [floor, setFloor] = useState('');
+  // const [color, setColor] = useState('');
+  // const [showTooltip, setShowTooltip] = useState(false);
+  // const [tooltipX, setTooltipX] = useState(0);
+  // const [tooltipY, setTooltipY] = useState(0);
   const circleRef = useRef();
+  // const wrapperRef = useRef();
   const id = user.aboutConcert._id;
   
   // Отримати заброньовані квитки
@@ -120,19 +129,30 @@ const HallFilarmoniya = observer(() => {
   };
 
   // При наведенні курсора на місце (квиток) змінюєься розмір і додається кордон жовтого кольору
-  const enterCircle = (target) =>{
-    target.setAttribute('r', '1.5')
-    target.style.stroke = 'yellow'
-    target.style.strokeWidth = '0.5px'
+  const enterCircle = (event) =>{
+    // const x = event.pageX - 68//- event.target.offsetLeft;
+    // const y = event.pageY - wrapperRef.current.offsetTop - 90//- event.target.offsetTop;
+    // setTooltipX(x);
+    // setTooltipY(y);
+    // setSeat(event.target.getAttribute("seat"))
+    // setRow(event.target.getAttribute("row"))
+    // setFloor(event.target.getAttribute("floor"))
+    // setColor(event.target.style.fill)
+    event.target.setAttribute('r', '2')
+    event.target.style.stroke = 'yellow'
+    event.target.style.strokeWidth = '0.5px'
+    //setShowTooltip(true)
   }
   // При прибирання курсора з місця (квитка) розмір повертається до стандартного та прибирається кордон
-  const leaveCircle = (target) =>{
-    target.setAttribute('r', '1.25')
-    target.style.stroke = 'none'
-    target.style.strokeWidth = '0'
+  const leaveCircle = (event) =>{
+    event.target.setAttribute('r', '1.25')
+    event.target.style.stroke = 'none'
+    event.target.style.strokeWidth = '0'
+    //setShowTooltip(false)
   }
+  // {showTooltip && <Tooltip seat={seat} row={row} floor={floor} color={color} x={tooltipX} y={tooltipY} />}
   return (
-      <div className='wrapper-svg-filarmoniya'>
+      <div className='wrapper-svg-filarmoniya' >
         <svg
     width="210mm"
   height="297mm"
@@ -1072,8 +1092,8 @@ const HallFilarmoniya = observer(() => {
         id="tspan1708">СЦЕНА</tspan></text></g>
         <g ref={circleRef} label="Circle" groupmode="layer" id="layer1" style={{display: 'inline'}}>
     <circle
-    onMouseEnter={e => enterCircle(e.target)}
-    onMouseLeave={e => leaveCircle(e.target)}
+    onMouseOver={e => enterCircle(e)}
+    onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill:'#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="path11"
       cx="139.2798"
@@ -1085,8 +1105,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       onClick={e => choosePlace(e.target)} 
       /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse11"
       cx="136.005"
@@ -1097,8 +1117,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse12"
       cx="132.83005"
@@ -1109,8 +1129,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse13"
       cx="129.755"
@@ -1121,8 +1141,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse14"
       cx="126.58002"
@@ -1133,8 +1153,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse15"
       cx="123.505"
@@ -1145,8 +1165,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse16"
       cx="120.43"
@@ -1157,8 +1177,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse17"
       cx="117.255"
@@ -1169,8 +1189,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse18"
       cx="114.08"
@@ -1181,8 +1201,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse19"
       cx="111.005"
@@ -1193,8 +1213,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse20"
       cx="107.93"
@@ -1205,8 +1225,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse21"
       cx="104.855"
@@ -1217,8 +1237,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse22"
       cx="101.88"
@@ -1229,8 +1249,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse23"
       cx="98.705002"
@@ -1241,8 +1261,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse24"
       cx="95.730003"
@@ -1253,8 +1273,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse25"
       cx="92.654999"
@@ -1265,8 +1285,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse26"
       cx="89.580002"
@@ -1277,8 +1297,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse27"
       cx="86.404999"
@@ -1289,8 +1309,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse28"
       cx="83.330002"
@@ -1301,8 +1321,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse29"
       cx="80.355003"
@@ -1313,8 +1333,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse30"
       cx="77.379997"
@@ -1325,8 +1345,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse31"
       cx="74.305"
@@ -1337,8 +1357,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse32"
       cx="71.129997"
@@ -1349,8 +1369,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse33"
       cx="67.855003"
@@ -1361,8 +1381,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse34"
       cx="64.779999"
@@ -1373,8 +1393,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse35"
       cx="61.604996"
@@ -1385,8 +1405,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.247608'}}
       id="ellipse36"
       cx="140.77985"
@@ -1397,8 +1417,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse37"
       cx="137.50505"
@@ -1409,8 +1429,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse38"
       cx="134.33009"
@@ -1421,8 +1441,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse39"
       cx="131.25505"
@@ -1433,8 +1453,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse40"
       cx="128.08002"
@@ -1445,8 +1465,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse41"
       cx="125.005"
@@ -1457,8 +1477,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse42"
       cx="121.93"
@@ -1469,8 +1489,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse43"
       cx="118.755"
@@ -1481,8 +1501,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse44"
       cx="115.58"
@@ -1493,8 +1513,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse45"
       cx="112.505"
@@ -1505,8 +1525,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse46"
       cx="109.43"
@@ -1517,8 +1537,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse47"
       cx="106.355"
@@ -1529,8 +1549,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse48"
       cx="103.38"
@@ -1541,8 +1561,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse49"
       cx="100.20499"
@@ -1553,8 +1573,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse50"
       cx="97.229988"
@@ -1565,8 +1585,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse51"
       cx="94.154984"
@@ -1577,8 +1597,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse52"
       cx="91.079987"
@@ -1589,8 +1609,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse53"
       cx="87.904984"
@@ -1601,8 +1621,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse54"
       cx="84.829987"
@@ -1613,8 +1633,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse55"
       cx="81.854988"
@@ -1625,8 +1645,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse56"
       cx="78.879982"
@@ -1637,8 +1657,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse57"
       cx="75.804985"
@@ -1649,8 +1669,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse58"
       cx="72.629982"
@@ -1661,8 +1681,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse59"
       cx="69.354988"
@@ -1673,8 +1693,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse60"
       cx="66.279984"
@@ -1685,8 +1705,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse61"
       cx="63.105"
@@ -1697,8 +1717,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse62"
       cx="60.029999"
@@ -1709,8 +1729,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse63"
       cx="142.57991"
@@ -1721,8 +1741,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse64"
       cx="139.30511"
@@ -1733,8 +1753,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse65"
       cx="136.13016"
@@ -1745,8 +1765,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse66"
       cx="133.05511"
@@ -1757,8 +1777,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse67"
       cx="129.88008"
@@ -1769,8 +1789,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse68"
       cx="126.805"
@@ -1781,8 +1801,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse69"
       cx="123.73"
@@ -1793,8 +1813,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse70"
       cx="120.555"
@@ -1805,8 +1825,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse71"
       cx="117.38"
@@ -1817,8 +1837,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse72"
       cx="114.305"
@@ -1828,8 +1848,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       seat="10" /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse73"
       cx="111.23"
@@ -1840,8 +1860,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse74"
       cx="108.155"
@@ -1852,8 +1872,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse75"
       cx="105.18"
@@ -1864,8 +1884,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse76"
       cx="102.00499"
@@ -1876,8 +1896,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse77"
       cx="99.029961"
@@ -1888,8 +1908,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse78"
       cx="95.954956"
@@ -1900,8 +1920,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse79"
       cx="92.879959"
@@ -1912,8 +1932,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse80"
       cx="89.704956"
@@ -1924,8 +1944,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse81"
       cx="86.629959"
@@ -1936,8 +1956,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse82"
       cx="83.654961"
@@ -1948,8 +1968,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse83"
       cx="80.679955"
@@ -1960,8 +1980,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse84"
       cx="77.604958"
@@ -1972,8 +1992,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse85"
       cx="74.429955"
@@ -1984,8 +2004,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse86"
       cx="71.154961"
@@ -1996,8 +2016,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse87"
       cx="68.079956"
@@ -2008,8 +2028,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse88"
       cx="64.904984"
@@ -2020,8 +2040,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse89"
       cx="61.830002"
@@ -2032,8 +2052,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#9c1142', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="ellipse90"
       cx="58.654999"
@@ -2044,8 +2064,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle228"
       cx="144.24272"
@@ -2056,8 +2076,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle229"
       cx="140.96793"
@@ -2068,8 +2088,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle230"
       cx="137.79297"
@@ -2080,8 +2100,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse230"
       cx="134.71793"
@@ -2092,8 +2112,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse231"
       cx="131.54295"
@@ -2104,8 +2124,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle231"
       cx="128.46797"
@@ -2116,8 +2136,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle232"
       cx="125.39297"
@@ -2128,8 +2148,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle233"
       cx="122.21798"
@@ -2140,8 +2160,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle234"
       cx="119.043"
@@ -2152,8 +2172,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle235"
       cx="115.96798"
@@ -2164,8 +2184,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle236"
       cx="112.89297"
@@ -2176,8 +2196,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle237"
       cx="109.81799"
@@ -2188,8 +2208,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle238"
       cx="106.84298"
@@ -2200,8 +2220,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle239"
       cx="103.66798"
@@ -2212,8 +2232,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle240"
       cx="100.69302"
@@ -2224,8 +2244,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle241"
       cx="97.617996"
@@ -2236,8 +2256,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle242"
       cx="94.542999"
@@ -2248,8 +2268,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle243"
       cx="91.367996"
@@ -2260,8 +2280,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle244"
       cx="88.292999"
@@ -2272,8 +2292,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle245"
       cx="85.318001"
@@ -2284,8 +2304,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle246"
       cx="82.342995"
@@ -2296,8 +2316,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle247"
       cx="79.267998"
@@ -2308,8 +2328,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle248"
       cx="76.092995"
@@ -2320,8 +2340,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle249"
       cx="72.818001"
@@ -2332,8 +2352,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle250"
       cx="69.742996"
@@ -2344,8 +2364,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle251"
       cx="66.567993"
@@ -2356,8 +2376,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#cf59cf', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="circle386"
       cx="63.427078"
@@ -2368,8 +2388,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#cf59cf', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="circle387"
       cx="60.252083"
@@ -2380,8 +2400,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#cf59cf', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="circle388"
       cx="57.07708"
@@ -2392,8 +2412,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse251"
       cx="142.66783"
@@ -2404,8 +2424,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle252"
       cx="139.39304"
@@ -2416,8 +2436,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle253"
       cx="136.21808"
@@ -2428,8 +2448,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle254"
       cx="133.14304"
@@ -2440,8 +2460,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle255"
       cx="129.968"
@@ -2452,8 +2472,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle256"
       cx="126.89299"
@@ -2464,8 +2484,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle257"
       cx="123.81799"
@@ -2476,8 +2496,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle258"
       cx="120.64301"
@@ -2488,8 +2508,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle259"
       cx="117.46801"
@@ -2500,8 +2520,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle260"
       cx="114.39301"
@@ -2512,8 +2532,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle261"
       cx="111.31799"
@@ -2524,8 +2544,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle262"
       cx="108.243"
@@ -2536,8 +2556,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle263"
       cx="105.26801"
@@ -2548,8 +2568,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle264"
       cx="102.09299"
@@ -2560,8 +2580,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle265"
       cx="99.118004"
@@ -2572,8 +2592,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle266"
       cx="96.042984"
@@ -2584,8 +2604,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle267"
       cx="92.967987"
@@ -2596,8 +2616,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle268"
       cx="89.792984"
@@ -2608,8 +2628,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle269"
       cx="86.717987"
@@ -2620,8 +2640,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle270"
       cx="83.742989"
@@ -2632,8 +2652,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle271"
       cx="80.767982"
@@ -2644,8 +2664,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle272"
       cx="77.692986"
@@ -2656,8 +2676,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle273"
       cx="74.517982"
@@ -2668,8 +2688,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle274"
       cx="71.242989"
@@ -2680,8 +2700,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle275"
       cx="68.167984"
@@ -2692,8 +2712,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle276"
       cx="64.992996"
@@ -2704,8 +2724,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle277"
       cx="61.917999"
@@ -2716,8 +2736,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#cf59cf', fillOpacity:'1', strokeWidth: '0.248452'}}
       id="circle390"
       cx="58.611"
@@ -2728,8 +2748,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle278"
       cx="144.26788"
@@ -2740,8 +2760,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle279"
       cx="140.99309"
@@ -2752,8 +2772,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle280"
       cx="137.81813"
@@ -2764,8 +2784,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle281"
       cx="134.74309"
@@ -2776,8 +2796,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle282"
       cx="131.56805"
@@ -2788,8 +2808,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle283"
       cx="128.49298"
@@ -2800,8 +2820,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle284"
       cx="125.41797"
@@ -2812,8 +2832,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle285"
       cx="122.24298"
@@ -2824,8 +2844,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle286"
       cx="119.068"
@@ -2836,8 +2856,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle287"
       cx="115.99298"
@@ -2848,8 +2868,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle288"
       cx="112.91799"
@@ -2860,8 +2880,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle289"
       cx="109.84303"
@@ -2872,8 +2892,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle290"
       cx="106.86798"
@@ -2884,8 +2904,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle291"
       cx="103.693"
@@ -2896,8 +2916,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle292"
       cx="100.71797"
@@ -2908,8 +2928,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle293"
       cx="97.642952"
@@ -2920,8 +2940,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle294"
       cx="94.567955"
@@ -2932,8 +2952,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle295"
       cx="91.392952"
@@ -2944,8 +2964,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle296"
       cx="88.317955"
@@ -2956,8 +2976,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle297"
       cx="85.342957"
@@ -2968,8 +2988,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle298"
       cx="82.36795"
@@ -2980,8 +3000,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle299"
       cx="79.292953"
@@ -2992,8 +3012,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle300"
       cx="76.11795"
@@ -3004,8 +3024,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle301"
       cx="72.842957"
@@ -3016,8 +3036,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle302"
       cx="69.767952"
@@ -3028,8 +3048,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle303"
       cx="66.592979"
@@ -3040,8 +3060,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle304"
       cx="63.517998"
@@ -3052,8 +3072,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle305"
       cx="60.342999"
@@ -3064,8 +3084,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#cf59cf', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle385"
       cx="57.167995"
@@ -3076,8 +3096,8 @@ const HallFilarmoniya = observer(() => {
       row="6"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse391"
       cx="142.66783"
@@ -3088,8 +3108,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle391"
       cx="139.39304"
@@ -3100,8 +3120,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle392"
       cx="136.21808"
@@ -3112,8 +3132,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle393"
       cx="133.14304"
@@ -3124,8 +3144,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle394"
       cx="129.968"
@@ -3136,8 +3156,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle395"
       cx="126.89299"
@@ -3148,8 +3168,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle396"
       cx="123.81799"
@@ -3160,8 +3180,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle397"
       cx="120.64301"
@@ -3172,8 +3192,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle398"
       cx="117.46801"
@@ -3184,8 +3204,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle399"
       cx="114.39301"
@@ -3196,8 +3216,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle400"
       cx="111.31799"
@@ -3208,8 +3228,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle401"
       cx="108.243"
@@ -3220,8 +3240,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle402"
       cx="105.26801"
@@ -3232,8 +3252,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle403"
       cx="102.09299"
@@ -3244,8 +3264,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle404"
       cx="99.118004"
@@ -3256,8 +3276,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle405"
       cx="96.042984"
@@ -3267,8 +3287,8 @@ const HallFilarmoniya = observer(() => {
       seat="16"
       floor="parterre"
       row="7" /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle406"
       cx="92.967987"
@@ -3279,8 +3299,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle407"
       cx="89.792984"
@@ -3290,8 +3310,8 @@ const HallFilarmoniya = observer(() => {
       seat="18"
       floor="parterre"
       row="7" /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle408"
       cx="86.717987"
@@ -3302,8 +3322,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle409"
       cx="83.742989"
@@ -3314,8 +3334,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle410"
       cx="80.767982"
@@ -3326,8 +3346,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle411"
       cx="77.692986"
@@ -3338,8 +3358,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle412"
       cx="74.517982"
@@ -3350,8 +3370,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle413"
       cx="71.242989"
@@ -3362,8 +3382,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle414"
       cx="68.167984"
@@ -3374,8 +3394,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle415"
       cx="64.992996"
@@ -3386,8 +3406,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle416"
       cx="61.917999"
@@ -3398,8 +3418,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle417"
       cx="58.611"
@@ -3410,8 +3430,8 @@ const HallFilarmoniya = observer(() => {
       row="7"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle418"
       cx="144.26788"
@@ -3422,8 +3442,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle419"
       cx="140.99309"
@@ -3434,8 +3454,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle420"
       cx="137.81813"
@@ -3446,8 +3466,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle421"
       cx="134.74309"
@@ -3458,8 +3478,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle422"
       cx="131.56805"
@@ -3470,8 +3490,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle423"
       cx="128.49298"
@@ -3482,8 +3502,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle424"
       cx="125.41797"
@@ -3494,8 +3514,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle425"
       cx="122.24298"
@@ -3506,8 +3526,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle426"
       cx="119.068"
@@ -3518,8 +3538,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle427"
       cx="115.99298"
@@ -3530,8 +3550,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle428"
       cx="112.91799"
@@ -3542,8 +3562,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle429"
       cx="109.84303"
@@ -3554,8 +3574,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle430"
       cx="106.86798"
@@ -3566,8 +3586,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle431"
       cx="103.693"
@@ -3578,8 +3598,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="8" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle432"
       cx="100.71797"
@@ -3590,8 +3610,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle433"
       cx="97.642952"
@@ -3602,8 +3622,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle434"
       cx="94.567955"
@@ -3614,8 +3634,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle435"
       cx="91.392952"
@@ -3626,8 +3646,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle436"
       cx="88.317955"
@@ -3638,8 +3658,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle437"
       cx="85.342957"
@@ -3650,8 +3670,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle438"
       cx="82.36795"
@@ -3662,8 +3682,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle439"
       cx="79.292953"
@@ -3674,8 +3694,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle440"
       cx="76.11795"
@@ -3686,8 +3706,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="8" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle441"
       cx="72.842957"
@@ -3698,8 +3718,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle442"
       cx="69.767952"
@@ -3710,8 +3730,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle443"
       cx="66.592979"
@@ -3722,8 +3742,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle444"
       cx="63.517998"
@@ -3734,8 +3754,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle445"
       cx="60.342999"
@@ -3746,8 +3766,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle446"
       cx="57.167995"
@@ -3758,8 +3778,8 @@ const HallFilarmoniya = observer(() => {
       row="8"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse502"
       cx="142.66783"
@@ -3770,8 +3790,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle502"
       cx="139.39304"
@@ -3782,8 +3802,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle503"
       cx="136.21808"
@@ -3794,8 +3814,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle504"
       cx="133.14304"
@@ -3806,8 +3826,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle505"
       cx="129.968"
@@ -3818,8 +3838,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle506"
       cx="126.89299"
@@ -3830,8 +3850,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle507"
       cx="123.81799"
@@ -3842,8 +3862,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle508"
       cx="120.64301"
@@ -3854,8 +3874,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle509"
       cx="117.46801"
@@ -3866,8 +3886,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle510"
       cx="114.39301"
@@ -3878,8 +3898,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle511"
       cx="111.31799"
@@ -3890,8 +3910,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle512"
       cx="108.243"
@@ -3902,8 +3922,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle513"
       cx="105.26801"
@@ -3914,8 +3934,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle514"
       cx="102.09299"
@@ -3926,8 +3946,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle515"
       cx="99.118004"
@@ -3938,8 +3958,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle516"
       cx="96.042984"
@@ -3950,8 +3970,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle517"
       cx="92.967987"
@@ -3962,8 +3982,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle518"
       cx="89.792984"
@@ -3974,8 +3994,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle519"
       cx="86.717987"
@@ -3986,8 +4006,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle520"
       cx="83.742989"
@@ -3998,8 +4018,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle521"
       cx="80.767982"
@@ -4010,8 +4030,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle522"
       cx="77.692986"
@@ -4022,8 +4042,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle523"
       cx="74.517982"
@@ -4034,8 +4054,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle524"
       cx="71.242989"
@@ -4046,8 +4066,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle525"
       cx="68.167984"
@@ -4058,8 +4078,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle526"
       cx="64.992996"
@@ -4070,8 +4090,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle527"
       cx="61.917999"
@@ -4082,8 +4102,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle528"
       cx="58.611"
@@ -4094,8 +4114,8 @@ const HallFilarmoniya = observer(() => {
       row="9"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle529"
       cx="144.26788"
@@ -4106,8 +4126,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle530"
       cx="140.99309"
@@ -4118,8 +4138,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle531"
       cx="137.81813"
@@ -4130,8 +4150,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle532"
       cx="134.74309"
@@ -4142,8 +4162,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle533"
       cx="131.56805"
@@ -4154,8 +4174,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle534"
       cx="128.49298"
@@ -4166,8 +4186,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle535"
       cx="125.41797"
@@ -4178,8 +4198,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle536"
       cx="122.24298"
@@ -4190,8 +4210,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle537"
       cx="119.068"
@@ -4202,8 +4222,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle538"
       cx="115.99298"
@@ -4214,8 +4234,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle539"
       cx="112.91799"
@@ -4226,8 +4246,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle540"
       cx="109.84303"
@@ -4238,8 +4258,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle541"
       cx="106.86798"
@@ -4250,8 +4270,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle542"
       cx="103.693"
@@ -4262,8 +4282,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle543"
       cx="100.71797"
@@ -4274,8 +4294,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle544"
       cx="97.642952"
@@ -4286,8 +4306,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle545"
       cx="94.567955"
@@ -4298,8 +4318,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle546"
       cx="91.392952"
@@ -4310,8 +4330,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle547"
       cx="88.317955"
@@ -4322,8 +4342,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle548"
       cx="85.342957"
@@ -4334,8 +4354,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle549"
       cx="82.36795"
@@ -4346,8 +4366,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle550"
       cx="79.292953"
@@ -4358,8 +4378,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle551"
       cx="76.11795"
@@ -4370,8 +4390,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle552"
       cx="72.842957"
@@ -4382,8 +4402,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle553"
       cx="69.767952"
@@ -4394,8 +4414,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle554"
       cx="66.592979"
@@ -4406,8 +4426,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle555"
       cx="63.517998"
@@ -4418,8 +4438,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle556"
       cx="60.342999"
@@ -4430,8 +4450,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#53ac4d', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle557"
       cx="57.167995"
@@ -4442,8 +4462,8 @@ const HallFilarmoniya = observer(() => {
       row="10"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse557"
       cx="142.66783"
@@ -4454,8 +4474,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle558"
       cx="139.39304"
@@ -4466,8 +4486,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle559"
       cx="136.21808"
@@ -4478,8 +4498,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle560"
       cx="133.14304"
@@ -4490,8 +4510,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle561"
       cx="129.968"
@@ -4502,8 +4522,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle562"
       cx="126.89299"
@@ -4514,8 +4534,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle563"
       cx="123.81799"
@@ -4526,8 +4546,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle564"
       cx="120.64301"
@@ -4538,8 +4558,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle565"
       cx="117.46801"
@@ -4550,8 +4570,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle566"
       cx="114.39301"
@@ -4562,8 +4582,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle567"
       cx="111.31799"
@@ -4574,8 +4594,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle568"
       cx="108.243"
@@ -4586,8 +4606,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle569"
       cx="105.26801"
@@ -4598,8 +4618,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle570"
       cx="102.09299"
@@ -4610,8 +4630,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle571"
       cx="99.118004"
@@ -4622,8 +4642,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle572"
       cx="96.042984"
@@ -4634,8 +4654,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle573"
       cx="92.967987"
@@ -4646,8 +4666,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle574"
       cx="89.792984"
@@ -4658,8 +4678,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle575"
       cx="86.717987"
@@ -4670,8 +4690,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="11" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle576"
       cx="83.742989"
@@ -4682,8 +4702,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle577"
       cx="80.767982"
@@ -4694,8 +4714,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle578"
       cx="77.692986"
@@ -4706,8 +4726,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle579"
       cx="74.517982"
@@ -4718,8 +4738,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="11" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle580"
       cx="71.242989"
@@ -4730,8 +4750,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle581"
       cx="68.167984"
@@ -4742,8 +4762,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle582"
       cx="64.992996"
@@ -4754,8 +4774,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle583"
       cx="61.917999"
@@ -4766,8 +4786,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle584"
       cx="58.611"
@@ -4778,8 +4798,8 @@ const HallFilarmoniya = observer(() => {
       row="11"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle585"
       cx="144.26788"
@@ -4790,8 +4810,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle586"
       cx="140.99309"
@@ -4802,8 +4822,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle587"
       cx="137.81813"
@@ -4814,8 +4834,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle588"
       cx="134.74309"
@@ -4826,8 +4846,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle589"
       cx="131.56805"
@@ -4838,8 +4858,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle590"
       cx="128.49298"
@@ -4850,8 +4870,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle591"
       cx="125.41797"
@@ -4862,8 +4882,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle592"
       cx="122.24298"
@@ -4874,8 +4894,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle593"
       cx="119.068"
@@ -4886,8 +4906,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle594"
       cx="115.99298"
@@ -4898,8 +4918,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle595"
       cx="112.91799"
@@ -4910,8 +4930,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="12" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle596"
       cx="109.84303"
@@ -4922,8 +4942,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle597"
       cx="106.86798"
@@ -4934,8 +4954,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle598"
       cx="103.693"
@@ -4946,8 +4966,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle599"
       cx="100.71797"
@@ -4958,8 +4978,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle600"
       cx="97.642952"
@@ -4970,8 +4990,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle601"
       cx="94.567955"
@@ -4982,8 +5002,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle602"
       cx="91.392952"
@@ -4994,8 +5014,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle603"
       cx="88.317955"
@@ -5006,8 +5026,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle604"
       cx="85.342957"
@@ -5018,8 +5038,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle605"
       cx="82.36795"
@@ -5030,8 +5050,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle606"
       cx="79.292953"
@@ -5042,8 +5062,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle607"
       cx="76.11795"
@@ -5054,8 +5074,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle608"
       cx="72.842957"
@@ -5066,8 +5086,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle609"
       cx="69.767952"
@@ -5078,8 +5098,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle610"
       cx="66.592979"
@@ -5090,8 +5110,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle611"
       cx="63.517998"
@@ -5102,8 +5122,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle612"
       cx="60.342999"
@@ -5114,8 +5134,8 @@ const HallFilarmoniya = observer(() => {
       row="12"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle613"
       cx="57.167995"
@@ -5126,8 +5146,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="12" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="ellipse726"
       cx="142.66783"
@@ -5138,8 +5158,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle726"
       cx="139.39304"
@@ -5150,8 +5170,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle727"
       cx="136.21808"
@@ -5162,8 +5182,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle728"
       cx="133.14304"
@@ -5174,8 +5194,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle729"
       cx="129.968"
@@ -5186,8 +5206,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle730"
       cx="126.89299"
@@ -5198,8 +5218,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle731"
       cx="123.81799"
@@ -5210,8 +5230,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle732"
       cx="120.64301"
@@ -5222,8 +5242,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle733"
       cx="117.46801"
@@ -5234,8 +5254,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle734"
       cx="114.39301"
@@ -5246,8 +5266,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle735"
       cx="111.31799"
@@ -5258,8 +5278,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle736"
       cx="108.243"
@@ -5270,8 +5290,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle737"
       cx="105.26801"
@@ -5282,8 +5302,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle738"
       cx="102.09299"
@@ -5294,8 +5314,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle739"
       cx="99.118004"
@@ -5306,8 +5326,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle740"
       cx="96.042984"
@@ -5318,8 +5338,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle741"
       cx="92.967987"
@@ -5330,8 +5350,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle742"
       cx="89.792984"
@@ -5342,8 +5362,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle743"
       cx="86.717987"
@@ -5354,8 +5374,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle744"
       cx="83.742989"
@@ -5366,8 +5386,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle745"
       cx="80.767982"
@@ -5378,8 +5398,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle746"
       cx="77.692986"
@@ -5390,8 +5410,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle747"
       cx="74.517982"
@@ -5402,8 +5422,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle748"
       cx="71.242989"
@@ -5414,8 +5434,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle749"
       cx="68.167984"
@@ -5426,8 +5446,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle750"
       cx="64.992996"
@@ -5438,8 +5458,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle751"
       cx="61.917999"
@@ -5450,8 +5470,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle752"
       cx="58.611"
@@ -5462,8 +5482,8 @@ const HallFilarmoniya = observer(() => {
       row="13"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle753"
       cx="144.26788"
@@ -5474,8 +5494,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle754"
       cx="140.99309"
@@ -5486,8 +5506,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle755"
       cx="137.81813"
@@ -5498,8 +5518,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle756"
       cx="134.74309"
@@ -5510,8 +5530,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle757"
       cx="131.56805"
@@ -5522,8 +5542,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle758"
       cx="128.49298"
@@ -5534,8 +5554,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle759"
       cx="125.41797"
@@ -5546,8 +5566,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle760"
       cx="122.24298"
@@ -5558,8 +5578,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle761"
       cx="119.068"
@@ -5570,8 +5590,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle762"
       cx="115.99298"
@@ -5582,8 +5602,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle763"
       cx="112.91799"
@@ -5594,8 +5614,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle764"
       cx="109.84303"
@@ -5606,8 +5626,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle765"
       cx="106.86798"
@@ -5618,8 +5638,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle766"
       cx="103.693"
@@ -5630,8 +5650,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle767"
       cx="100.71797"
@@ -5642,8 +5662,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle768"
       cx="97.642952"
@@ -5654,8 +5674,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle769"
       cx="94.567955"
@@ -5666,8 +5686,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle770"
       cx="91.392952"
@@ -5678,8 +5698,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle771"
       cx="88.317955"
@@ -5690,8 +5710,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle772"
       cx="85.342957"
@@ -5702,8 +5722,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle773"
       cx="82.36795"
@@ -5714,8 +5734,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle774"
       cx="79.292953"
@@ -5726,8 +5746,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle775"
       cx="76.11795"
@@ -5738,8 +5758,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle776"
       cx="72.842957"
@@ -5750,8 +5770,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle777"
       cx="69.767952"
@@ -5762,8 +5782,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle778"
       cx="66.592979"
@@ -5774,8 +5794,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle779"
       cx="63.517998"
@@ -5786,8 +5806,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle780"
       cx="60.342999"
@@ -5798,8 +5818,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fcb203', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle781"
       cx="57.167995"
@@ -5810,8 +5830,8 @@ const HallFilarmoniya = observer(() => {
       row="14"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle837"
       cx="143.83894"
@@ -5823,8 +5843,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle838"
       cx="140.33514"
@@ -5836,8 +5856,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle839"
       cx="136.63103"
@@ -5849,8 +5869,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle840"
       cx="133.02682"
@@ -5862,8 +5882,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle841"
       cx="129.452"
@@ -5875,8 +5895,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle842"
       cx="125.818"
@@ -5888,8 +5908,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle843"
       cx="122.243"
@@ -5901,8 +5921,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle844"
       cx="118.61"
@@ -5914,8 +5934,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle845"
       cx="114.935"
@@ -5927,8 +5947,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle846"
       cx="111.30156"
@@ -5940,8 +5960,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle847"
       cx="107.69738"
@@ -5953,8 +5973,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle848"
       cx="104.0933"
@@ -5966,8 +5986,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle849"
       cx="100.46"
@@ -5979,8 +5999,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle850"
       cx="96.884911"
@@ -5992,8 +6012,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle851"
       cx="93.280998"
@@ -6005,8 +6025,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle852"
       cx="89.677002"
@@ -6018,8 +6038,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle853"
       cx="86.071999"
@@ -6031,8 +6051,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle854"
       cx="82.46817"
@@ -6044,8 +6064,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle855"
       cx="78.864006"
@@ -6057,8 +6077,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle856"
       cx="75.231003"
@@ -6070,8 +6090,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle857"
       cx="71.539001"
@@ -6083,8 +6103,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle858"
       cx="67.963997"
@@ -6096,8 +6116,8 @@ const HallFilarmoniya = observer(() => {
       row="14A" 
       booked="true"
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle859"
       cx="64.289001"
@@ -6109,8 +6129,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle860"
       cx="60.714001"
@@ -6122,8 +6142,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#a7a7a7', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle861"
       cx="57.139"
@@ -6135,8 +6155,8 @@ const HallFilarmoniya = observer(() => {
       booked="true"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle885"
       cx="153.06783"
@@ -6147,8 +6167,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle886"
       cx="149.79303"
@@ -6159,8 +6179,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle887"
       cx="146.61807"
@@ -6171,8 +6191,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle888"
       cx="143.54303"
@@ -6183,8 +6203,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle889"
       cx="140.368"
@@ -6195,8 +6215,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle893"
       cx="126.90503"
@@ -6207,8 +6227,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle894"
       cx="123.83001"
@@ -6219,8 +6239,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle895"
       cx="120.65503"
@@ -6231,8 +6251,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle896"
       cx="117.48005"
@@ -6243,8 +6263,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle897"
       cx="114.40503"
@@ -6255,8 +6275,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle898"
       cx="111.33003"
@@ -6267,8 +6287,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle899"
       cx="108.25509"
@@ -6279,8 +6299,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle900"
       cx="105.28003"
@@ -6291,8 +6311,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle901"
       cx="102.10505"
@@ -6303,8 +6323,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle902"
       cx="99.130013"
@@ -6315,8 +6335,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle903"
       cx="96.055"
@@ -6327,8 +6347,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle904"
       cx="92.980003"
@@ -6339,8 +6359,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle905"
       cx="89.805"
@@ -6351,8 +6371,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle906"
       cx="86.730003"
@@ -6363,8 +6383,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle907"
       cx="83.755005"
@@ -6375,8 +6395,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle908"
       cx="80.779999"
@@ -6387,8 +6407,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle909"
       cx="77.705002"
@@ -6399,8 +6419,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle910"
       cx="74.529999"
@@ -6411,8 +6431,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle927"
       cx="61.688988"
@@ -6423,8 +6443,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle928"
       cx="58.613983"
@@ -6435,8 +6455,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle929"
       cx="55.438995"
@@ -6447,8 +6467,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle930"
       cx="52.363998"
@@ -6459,8 +6479,8 @@ const HallFilarmoniya = observer(() => {
       row="15"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle931"
       cx="49.056999"
@@ -6471,8 +6491,8 @@ const HallFilarmoniya = observer(() => {
       seat="28"
       row="15" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle935"
       cx="153.06783"
@@ -6483,8 +6503,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle936"
       cx="149.79303"
@@ -6495,8 +6515,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle937"
       cx="146.61807"
@@ -6507,8 +6527,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle938"
       cx="143.54303"
@@ -6519,8 +6539,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle939"
       cx="140.368"
@@ -6531,8 +6551,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle943"
       cx="125.51802"
@@ -6543,8 +6563,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle944"
       cx="122.44303"
@@ -6555,8 +6575,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle945"
       cx="119.26802"
@@ -6567,8 +6587,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle946"
       cx="116.09304"
@@ -6579,8 +6599,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle947"
       cx="113.01802"
@@ -6591,8 +6611,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle948"
       cx="109.94306"
@@ -6603,8 +6623,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle949"
       cx="106.86808"
@@ -6615,8 +6635,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle950"
       cx="103.89302"
@@ -6627,8 +6647,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle951"
       cx="100.71804"
@@ -6639,8 +6659,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle952"
       cx="97.743011"
@@ -6651,8 +6671,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle953"
       cx="94.667999"
@@ -6663,8 +6683,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle954"
       cx="91.593002"
@@ -6675,8 +6695,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle955"
       cx="88.417999"
@@ -6687,8 +6707,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle956"
       cx="85.343002"
@@ -6699,8 +6719,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle957"
       cx="82.368004"
@@ -6711,8 +6731,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle958"
       cx="79.392998"
@@ -6723,8 +6743,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle959"
       cx="76.318001"
@@ -6735,8 +6755,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle975"
       cx="61.788986"
@@ -6747,8 +6767,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle976"
       cx="58.513992"
@@ -6759,8 +6779,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle977"
       cx="55.438988"
@@ -6771,8 +6791,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle978"
       cx="52.264"
@@ -6783,8 +6803,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle979"
       cx="49.188999"
@@ -6795,8 +6815,8 @@ const HallFilarmoniya = observer(() => {
       row="16"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle983"
       cx="153.06783"
@@ -6807,8 +6827,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle984"
       cx="149.79303"
@@ -6819,8 +6839,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle985"
       cx="146.61807"
@@ -6831,8 +6851,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle986"
       cx="143.54303"
@@ -6843,8 +6863,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle987"
       cx="140.368"
@@ -6855,8 +6875,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle991"
       cx="126.90503"
@@ -6867,8 +6887,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle992"
       cx="123.83001"
@@ -6879,8 +6899,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle993"
       cx="120.65503"
@@ -6891,8 +6911,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle994"
       cx="117.48005"
@@ -6903,8 +6923,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle995"
       cx="114.40503"
@@ -6915,8 +6935,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle996"
       cx="111.33002"
@@ -6927,8 +6947,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle997"
       cx="108.25509"
@@ -6939,8 +6959,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle998"
       cx="105.28003"
@@ -6951,8 +6971,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle999"
       cx="102.10505"
@@ -6963,8 +6983,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1000"
       cx="99.130013"
@@ -6975,8 +6995,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1001"
       cx="96.055"
@@ -6987,8 +7007,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1002"
       cx="92.980003"
@@ -6999,8 +7019,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1003"
       cx="89.805"
@@ -7011,8 +7031,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1004"
       cx="86.730003"
@@ -7023,8 +7043,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1005"
       cx="83.755005"
@@ -7035,8 +7055,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1006"
       cx="80.779999"
@@ -7047,8 +7067,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1007"
       cx="77.705002"
@@ -7059,8 +7079,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1008"
       cx="74.529999"
@@ -7071,8 +7091,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1025"
       cx="61.817989"
@@ -7083,8 +7103,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1026"
       cx="58.742985"
@@ -7095,8 +7115,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1027"
       cx="55.567997"
@@ -7107,8 +7127,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1028"
       cx="52.493"
@@ -7119,8 +7139,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{display: 'inline', fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1029"
       cx="49.186001"
@@ -7131,8 +7151,8 @@ const HallFilarmoniya = observer(() => {
       row="17"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1033"
       cx="153.06783"
@@ -7143,8 +7163,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1034"
       cx="149.79303"
@@ -7155,8 +7175,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1035"
       cx="146.61807"
@@ -7167,8 +7187,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1036"
       cx="143.54303"
@@ -7179,8 +7199,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1037"
       cx="140.368"
@@ -7191,8 +7211,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1041"
       cx="122.57204"
@@ -7203,8 +7223,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1042"
       cx="119.49702"
@@ -7215,8 +7235,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1043"
       cx="116.32204"
@@ -7227,8 +7247,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1044"
       cx="113.14706"
@@ -7239,8 +7259,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1045"
       cx="110.07204"
@@ -7251,8 +7271,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1046"
       cx="106.99702"
@@ -7263,8 +7283,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1047"
       cx="103.92208"
@@ -7275,8 +7295,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1048"
       cx="100.94704"
@@ -7287,8 +7307,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1049"
       cx="97.772034"
@@ -7299,8 +7319,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1050"
       cx="94.797005"
@@ -7311,8 +7331,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1051"
       cx="91.721992"
@@ -7323,8 +7343,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1052"
       cx="88.646996"
@@ -7335,8 +7355,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1053"
       cx="85.471992"
@@ -7347,8 +7367,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1054"
       cx="82.396996"
@@ -7359,8 +7379,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1055"
       cx="79.421997"
@@ -7371,8 +7391,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1069"
       cx="61.717964"
@@ -7383,8 +7403,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1070"
       cx="58.642967"
@@ -7395,8 +7415,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1071"
       cx="55.467964"
@@ -7407,8 +7427,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1072"
       cx="52.19297"
@@ -7419,8 +7439,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1073"
       cx="49.117966"
@@ -7431,8 +7451,8 @@ const HallFilarmoniya = observer(() => {
       row="18"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1077"
       cx="153.06783"
@@ -7443,8 +7463,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1078"
       cx="149.79303"
@@ -7455,8 +7475,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1079"
       cx="146.61807"
@@ -7467,8 +7487,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1080"
       cx="143.54303"
@@ -7479,8 +7499,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1081"
       cx="140.368"
@@ -7491,8 +7511,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1085"
       cx="121.28452"
@@ -7503,8 +7523,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1086"
       cx="118.20953"
@@ -7515,8 +7535,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1087"
       cx="115.03452"
@@ -7527,8 +7547,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1088"
       cx="111.85954"
@@ -7539,8 +7559,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1089"
       cx="108.78452"
@@ -7551,8 +7571,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1090"
       cx="105.70953"
@@ -7563,8 +7583,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1091"
       cx="102.63458"
@@ -7575,8 +7595,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1092"
       cx="99.659523"
@@ -7587,8 +7607,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1093"
       cx="96.484535"
@@ -7599,8 +7619,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="19" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1094"
       cx="93.509506"
@@ -7611,8 +7631,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1095"
       cx="90.434494"
@@ -7623,8 +7643,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1096"
       cx="87.359497"
@@ -7635,8 +7655,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1097"
       cx="84.184494"
@@ -7647,8 +7667,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1098"
       cx="81.109497"
@@ -7659,8 +7679,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1111"
       cx="61.717999"
@@ -7671,8 +7691,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1112"
       cx="58.742992"
@@ -7683,8 +7703,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1113"
       cx="55.667995"
@@ -7695,8 +7715,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1114"
       cx="52.492992"
@@ -7707,8 +7727,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1115"
       cx="49.217999"
@@ -7719,8 +7739,8 @@ const HallFilarmoniya = observer(() => {
       row="19"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1119"
       cx="153.06783"
@@ -7731,8 +7751,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1120"
       cx="149.79303"
@@ -7743,8 +7763,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1121"
       cx="146.61807"
@@ -7755,8 +7775,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1122"
       cx="143.54303"
@@ -7767,8 +7787,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1123"
       cx="140.368"
@@ -7779,8 +7799,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1127"
       cx="122.84303"
@@ -7791,8 +7811,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1128"
       cx="119.76803"
@@ -7803,8 +7823,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1129"
       cx="116.59303"
@@ -7815,8 +7835,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1130"
       cx="113.41805"
@@ -7827,8 +7847,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1131"
       cx="110.34303"
@@ -7839,8 +7859,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1132"
       cx="107.26803"
@@ -7851,8 +7871,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1133"
       cx="104.19308"
@@ -7863,8 +7883,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1134"
       cx="101.21803"
@@ -7875,8 +7895,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1135"
       cx="98.043037"
@@ -7887,8 +7907,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1136"
       cx="95.068008"
@@ -7899,8 +7919,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       seat="15" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1137"
       cx="91.992996"
@@ -7911,8 +7931,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1138"
       cx="88.917999"
@@ -7923,8 +7943,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1139"
       cx="85.742996"
@@ -7935,8 +7955,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1140"
       cx="82.667999"
@@ -7947,8 +7967,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1141"
       cx="79.693001"
@@ -7959,8 +7979,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1155"
       cx="61.717999"
@@ -7971,8 +7991,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1156"
       cx="58.643002"
@@ -7983,8 +8003,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1157"
       cx="55.467999"
@@ -7995,8 +8015,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1158"
       cx="52.193005"
@@ -8007,8 +8027,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1159"
       cx="49.118"
@@ -8019,8 +8039,8 @@ const HallFilarmoniya = observer(() => {
       row="20"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1163"
       cx="153.06783"
@@ -8031,8 +8051,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1164"
       cx="149.79303"
@@ -8043,8 +8063,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1165"
       cx="146.61807"
@@ -8055,8 +8075,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1166"
       cx="143.54303"
@@ -8067,8 +8087,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1167"
       cx="140.368"
@@ -8079,8 +8099,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1171"
       cx="121.28403"
@@ -8091,8 +8111,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1172"
       cx="118.20904"
@@ -8103,8 +8123,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1173"
       cx="115.03403"
@@ -8115,8 +8135,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1174"
       cx="111.85905"
@@ -8127,8 +8147,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1175"
       cx="108.78403"
@@ -8139,8 +8159,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1176"
       cx="105.70904"
@@ -8151,8 +8171,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1177"
       cx="102.63409"
@@ -8163,8 +8183,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1178"
       cx="99.659027"
@@ -8175,8 +8195,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1179"
       cx="96.484039"
@@ -8187,8 +8207,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1180"
       cx="93.50901"
@@ -8199,8 +8219,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1181"
       cx="90.433998"
@@ -8211,8 +8231,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1182"
       cx="87.359001"
@@ -8223,8 +8243,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1183"
       cx="84.183998"
@@ -8235,8 +8255,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="21" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1184"
       cx="81.109001"
@@ -8247,8 +8267,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1197"
       cx="61.717999"
@@ -8259,8 +8279,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1198"
       cx="58.742992"
@@ -8271,8 +8291,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1199"
       cx="55.667995"
@@ -8283,8 +8303,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="21" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1200"
       cx="52.492992"
@@ -8295,8 +8315,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1201"
       cx="49.217999"
@@ -8307,8 +8327,8 @@ const HallFilarmoniya = observer(() => {
       row="21"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1205"
       cx="153.06783"
@@ -8319,8 +8339,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1206"
       cx="149.79303"
@@ -8331,8 +8351,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       seat="2" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1207"
       cx="146.61807"
@@ -8343,8 +8363,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1208"
       cx="143.54303"
@@ -8355,8 +8375,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1209"
       cx="140.368"
@@ -8367,8 +8387,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1213"
       cx="122.87203"
@@ -8379,8 +8399,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1214"
       cx="119.79702"
@@ -8391,8 +8411,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1215"
       cx="116.62203"
@@ -8403,8 +8423,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1216"
       cx="113.44705"
@@ -8415,8 +8435,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1217"
       cx="110.37203"
@@ -8427,8 +8447,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1218"
       cx="107.29702"
@@ -8439,8 +8459,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1219"
       cx="104.22209"
@@ -8451,8 +8471,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1220"
       cx="101.24703"
@@ -8463,8 +8483,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1221"
       cx="98.072037"
@@ -8475,8 +8495,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1222"
       cx="95.097008"
@@ -8487,8 +8507,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1223"
       cx="92.021996"
@@ -8499,8 +8519,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1224"
       cx="88.946999"
@@ -8511,8 +8531,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1225"
       cx="85.771996"
@@ -8523,8 +8543,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1226"
       cx="82.696999"
@@ -8535,8 +8555,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1227"
       cx="79.722"
@@ -8547,8 +8567,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1241"
       cx="61.717999"
@@ -8559,8 +8579,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1242"
       cx="58.643002"
@@ -8571,8 +8591,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1243"
       cx="55.467999"
@@ -8583,8 +8603,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1244"
       cx="52.193005"
@@ -8595,8 +8615,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1245"
       cx="49.118"
@@ -8607,8 +8627,8 @@ const HallFilarmoniya = observer(() => {
       row="22"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1249"
       cx="150.7218"
@@ -8619,8 +8639,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1250"
       cx="147.44701"
@@ -8631,8 +8651,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1251"
       cx="144.27205"
@@ -8643,8 +8663,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1252"
       cx="141.19701"
@@ -8655,8 +8675,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1255"
       cx="121.44317"
@@ -8667,8 +8687,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1256"
       cx="118.36804"
@@ -8679,8 +8699,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1257"
       cx="115.29305"
@@ -8691,8 +8711,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1258"
       cx="112.11804"
@@ -8703,8 +8723,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1259"
       cx="108.94305"
@@ -8715,8 +8735,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1260"
       cx="105.86804"
@@ -8727,8 +8747,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="23" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1261"
       cx="102.79305"
@@ -8739,8 +8759,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1262"
       cx="99.718117"
@@ -8751,8 +8771,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1263"
       cx="96.743042"
@@ -8763,8 +8783,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1264"
       cx="93.568039"
@@ -8775,8 +8795,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1265"
       cx="90.59301"
@@ -8787,8 +8807,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1266"
       cx="87.517998"
@@ -8799,8 +8819,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1267"
       cx="84.443001"
@@ -8811,8 +8831,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1268"
       cx="81.267998"
@@ -8823,8 +8843,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1281"
       cx="61.747169"
@@ -8835,8 +8855,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1282"
       cx="58.643002"
@@ -8847,8 +8867,8 @@ const HallFilarmoniya = observer(() => {
       floor="parterre"
       row="23"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1283"
       cx="55.467999"
@@ -8859,8 +8879,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#806600', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1284"
       cx="52.092999"
@@ -8871,8 +8891,8 @@ const HallFilarmoniya = observer(() => {
       row="23"
       floor="parterre"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1576"
       cx="171.784"
@@ -8883,8 +8903,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1577"
       cx="171.05499"
@@ -8895,8 +8915,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1578"
       cx="171.784"
@@ -8907,8 +8927,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1579"
       cx="171.026"
@@ -8919,8 +8939,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1580"
       cx="171.78419"
@@ -8931,8 +8951,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1581"
       cx="171.026"
@@ -8943,8 +8963,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1582"
       cx="171.784"
@@ -8955,8 +8975,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1583"
       cx="171.026"
@@ -8967,8 +8987,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1584"
       cx="171.855"
@@ -8979,8 +8999,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1585"
       cx="171.026"
@@ -8991,8 +9011,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="leftLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1594"
       cx="29.239"
@@ -9003,8 +9023,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1595"
       cx="30.068001"
@@ -9015,8 +9035,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1596"
       cx="29.297001"
@@ -9027,8 +9047,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1597"
       cx="30.139"
@@ -9039,8 +9059,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1598"
       cx="29.297001"
@@ -9051,8 +9071,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1599"
       cx="30.139"
@@ -9063,8 +9083,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1600"
       cx="29.297001"
@@ -9075,8 +9095,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1601"
       cx="30.039"
@@ -9087,8 +9107,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1602"
       cx="29.268"
@@ -9099,8 +9119,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia"
       onClick={e => choosePlace(e.target)} /><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1603"
       cx="30.139"
@@ -9111,8 +9131,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="rightLoggia" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1"
       cx="145.39101"
@@ -9123,8 +9143,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle2"
       cx="142.11621"
@@ -9135,8 +9155,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle225"
       cx="138.94125"
@@ -9147,8 +9167,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle4"
       cx="135.86621"
@@ -9159,8 +9179,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle5"
       cx="132.69118"
@@ -9171,8 +9191,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle6"
       cx="129.6161"
@@ -9183,8 +9203,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle7"
       cx="126.54108"
@@ -9195,8 +9215,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle8"
       cx="123.36609"
@@ -9207,8 +9227,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle9"
       cx="120.1911"
@@ -9219,8 +9239,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle10"
       cx="117.11609"
@@ -9231,8 +9251,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle11"
       cx="114.04111"
@@ -9243,8 +9263,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle12"
       cx="110.96614"
@@ -9255,8 +9275,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle13"
       cx="107.99109"
@@ -9267,8 +9287,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle14"
       cx="104.8161"
@@ -9279,8 +9299,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle15"
       cx="101.84109"
@@ -9291,8 +9311,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle16"
       cx="98.76606"
@@ -9303,8 +9323,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle17"
       cx="95.691063"
@@ -9315,8 +9335,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle18"
       cx="92.51606"
@@ -9327,8 +9347,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle19"
       cx="89.441063"
@@ -9339,8 +9359,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle20"
       cx="86.466064"
@@ -9351,8 +9371,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle21"
       cx="83.491058"
@@ -9363,8 +9383,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle22"
       cx="80.416061"
@@ -9375,8 +9395,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle23"
       cx="77.241058"
@@ -9387,8 +9407,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle24"
       cx="73.966064"
@@ -9399,8 +9419,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle25"
       cx="70.89106"
@@ -9411,8 +9431,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle26"
       cx="67.716087"
@@ -9423,8 +9443,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle27"
       cx="64.641106"
@@ -9435,8 +9455,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle28"
       cx="61.466114"
@@ -9447,8 +9467,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle29"
       cx="58.291111"
@@ -9459,8 +9479,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill:'#008080', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle222"
       cx="55.016197"
@@ -9471,8 +9491,8 @@ const HallFilarmoniya = observer(() => {
       row="1"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle614"
       cx="145.39101"
@@ -9483,8 +9503,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle615"
       cx="142.11621"
@@ -9495,8 +9515,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle616"
       cx="138.94125"
@@ -9507,8 +9527,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle617"
       cx="135.86621"
@@ -9519,8 +9539,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle618"
       cx="132.69118"
@@ -9531,8 +9551,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle619"
       cx="129.6161"
@@ -9543,8 +9563,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle620"
       cx="126.54108"
@@ -9555,8 +9575,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle621"
       cx="123.36609"
@@ -9567,8 +9587,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle622"
       cx="120.1911"
@@ -9579,8 +9599,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle623"
       cx="117.11609"
@@ -9591,8 +9611,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle624"
       cx="114.04111"
@@ -9603,8 +9623,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle625"
       cx="110.96614"
@@ -9615,8 +9635,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle626"
       cx="107.99109"
@@ -9627,8 +9647,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle627"
       cx="104.8161"
@@ -9639,8 +9659,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle628"
       cx="101.84109"
@@ -9651,8 +9671,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle629"
       cx="98.76606"
@@ -9663,8 +9683,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle630"
       cx="95.691063"
@@ -9675,8 +9695,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle631"
       cx="92.51606"
@@ -9687,8 +9707,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle632"
       cx="89.441063"
@@ -9699,8 +9719,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle633"
       cx="86.466064"
@@ -9711,8 +9731,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle634"
       cx="83.491058"
@@ -9723,8 +9743,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle635"
       cx="80.416061"
@@ -9735,8 +9755,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle636"
       cx="77.241058"
@@ -9747,8 +9767,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle637"
       cx="73.966064"
@@ -9759,8 +9779,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle638"
       cx="70.89106"
@@ -9771,8 +9791,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle639"
       cx="67.716087"
@@ -9783,8 +9803,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle640"
       cx="64.641106"
@@ -9795,8 +9815,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle641"
       cx="61.466114"
@@ -9807,8 +9827,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle642"
       cx="58.291111"
@@ -9819,8 +9839,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle643"
       cx="55.016197"
@@ -9831,8 +9851,8 @@ const HallFilarmoniya = observer(() => {
       row="2"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle915"
       cx="145.39101"
@@ -9843,8 +9863,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle916"
       cx="142.11621"
@@ -9855,8 +9875,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle917"
       cx="138.94125"
@@ -9867,8 +9887,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle918"
       cx="135.86621"
@@ -9879,8 +9899,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle919"
       cx="132.69118"
@@ -9891,8 +9911,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle920"
       cx="129.6161"
@@ -9903,8 +9923,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle921"
       cx="126.54108"
@@ -9915,8 +9935,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle922"
       cx="123.36609"
@@ -9927,8 +9947,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle923"
       cx="120.1911"
@@ -9939,8 +9959,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle924"
       cx="117.11609"
@@ -9951,8 +9971,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle925"
       cx="114.04111"
@@ -9963,8 +9983,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle926"
       cx="110.96614"
@@ -9975,8 +9995,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle932"
       cx="107.99109"
@@ -9987,8 +10007,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle933"
       cx="104.8161"
@@ -9999,8 +10019,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle934"
       cx="101.84109"
@@ -10011,8 +10031,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle940"
       cx="98.76606"
@@ -10023,8 +10043,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle941"
       cx="95.691063"
@@ -10035,8 +10055,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle942"
       cx="92.51606"
@@ -10047,8 +10067,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle960"
       cx="89.441063"
@@ -10059,8 +10079,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle961"
       cx="86.466064"
@@ -10071,8 +10091,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle962"
       cx="83.491058"
@@ -10083,8 +10103,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle963"
       cx="80.416061"
@@ -10095,8 +10115,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle964"
       cx="77.241058"
@@ -10107,8 +10127,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle965"
       cx="73.966064"
@@ -10119,8 +10139,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle966"
       cx="70.89106"
@@ -10131,8 +10151,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle967"
       cx="67.716087"
@@ -10143,8 +10163,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle968"
       cx="64.641106"
@@ -10155,8 +10175,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle969"
       cx="61.466114"
@@ -10167,8 +10187,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle970"
       cx="58.291111"
@@ -10179,8 +10199,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#fa2a7f', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle971"
       cx="55.016197"
@@ -10191,8 +10211,8 @@ const HallFilarmoniya = observer(() => {
       row="3"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1116"
       cx="145.39101"
@@ -10203,8 +10223,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1117"
       cx="142.11621"
@@ -10215,8 +10235,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1118"
       cx="138.94125"
@@ -10227,8 +10247,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1124"
       cx="135.86621"
@@ -10239,8 +10259,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1125"
       cx="132.69118"
@@ -10251,8 +10271,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1126"
       cx="129.6161"
@@ -10263,8 +10283,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1142"
       cx="126.54108"
@@ -10275,8 +10295,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1143"
       cx="123.36609"
@@ -10287,8 +10307,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1144"
       cx="120.1911"
@@ -10299,8 +10319,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1145"
       cx="117.11609"
@@ -10311,8 +10331,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1146"
       cx="114.04111"
@@ -10323,8 +10343,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1147"
       cx="110.96614"
@@ -10335,8 +10355,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1148"
       cx="107.99109"
@@ -10347,8 +10367,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1149"
       cx="104.8161"
@@ -10359,8 +10379,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1150"
       cx="101.84109"
@@ -10371,8 +10391,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1151"
       cx="98.76606"
@@ -10383,8 +10403,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1152"
       cx="95.691063"
@@ -10395,8 +10415,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1153"
       cx="92.51606"
@@ -10407,8 +10427,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1154"
       cx="89.441063"
@@ -10419,8 +10439,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1160"
       cx="86.466064"
@@ -10431,8 +10451,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1161"
       cx="83.491058"
@@ -10443,8 +10463,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1162"
       cx="80.416061"
@@ -10455,8 +10475,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1168"
       cx="77.241058"
@@ -10467,8 +10487,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1169"
       cx="73.966064"
@@ -10479,8 +10499,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1170"
       cx="70.89106"
@@ -10491,8 +10511,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1185"
       cx="67.716087"
@@ -10503,8 +10523,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1186"
       cx="64.641106"
@@ -10515,8 +10535,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1187"
       cx="61.466114"
@@ -10527,8 +10547,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1188"
       cx="58.291111"
@@ -10539,8 +10559,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1189"
       cx="55.016197"
@@ -10551,8 +10571,8 @@ const HallFilarmoniya = observer(() => {
       row="4"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1363"
       cx="145.39101"
@@ -10563,8 +10583,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1364"
       cx="142.11621"
@@ -10575,8 +10595,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1365"
       cx="138.94125"
@@ -10587,8 +10607,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1366"
       cx="135.86621"
@@ -10599,8 +10619,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1367"
       cx="132.69118"
@@ -10611,8 +10631,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1368"
       cx="129.6161"
@@ -10623,8 +10643,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1369"
       cx="126.54108"
@@ -10635,8 +10655,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1370"
       cx="123.36609"
@@ -10647,8 +10667,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1371"
       cx="120.1911"
@@ -10659,8 +10679,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1372"
       cx="117.11609"
@@ -10671,8 +10691,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1373"
       cx="112.45361"
@@ -10683,8 +10703,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1374"
       cx="109.37864"
@@ -10695,8 +10715,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1375"
       cx="106.40358"
@@ -10707,8 +10727,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1376"
       cx="103.22859"
@@ -10719,8 +10739,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1377"
       cx="100.25359"
@@ -10731,8 +10751,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1378"
       cx="97.178558"
@@ -10743,8 +10763,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1379"
       cx="94.103561"
@@ -10755,8 +10775,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1380"
       cx="90.928558"
@@ -10767,8 +10787,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1381"
       cx="87.853561"
@@ -10779,8 +10799,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1382"
       cx="83.290955"
@@ -10791,8 +10811,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1383"
       cx="80.315948"
@@ -10803,8 +10823,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1384"
       cx="77.240952"
@@ -10815,8 +10835,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1385"
       cx="74.065948"
@@ -10827,8 +10847,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1386"
       cx="70.790955"
@@ -10839,8 +10859,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1387"
       cx="67.71595"
@@ -10851,8 +10871,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1388"
       cx="64.540977"
@@ -10863,8 +10883,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1389"
       cx="61.465996"
@@ -10875,8 +10895,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1390"
       cx="58.291004"
@@ -10887,8 +10907,8 @@ const HallFilarmoniya = observer(() => {
       row="5"
       floor="balcony" 
       onClick={e => choosePlace(e.target)}/><circle
-      onMouseEnter={e => enterCircle(e.target)}
-      onMouseLeave={e => leaveCircle(e.target)}
+      onMouseOver={e => enterCircle(e)}
+      onMouseOut={e => leaveCircle(e)}
       style={{fill: '#2815bd', fillOpacity: '1', strokeWidth: '0.248452'}}
       id="circle1391"
       cx="55.116001"
