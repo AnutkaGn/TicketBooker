@@ -1,4 +1,4 @@
-import React, {useContext, useRef, useEffect, useState} from 'react';
+import React, {useContext, useRef, useEffect} from 'react';
 import './hallFilarmoniya.css';
 import { observer } from 'mobx-react-lite';
 import { Context } from '../..';

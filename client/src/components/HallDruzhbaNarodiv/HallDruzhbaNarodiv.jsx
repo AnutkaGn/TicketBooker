@@ -1,8 +1,157 @@
-import React from 'react';
+import React, {useContext, useRef, useEffect} from 'react';
 import './hallDruzhbaNarodiv.css'
+import { observer } from 'mobx-react-lite';
+import { Context } from '../..';
+import { createTicket, getTickets, deleteTicket, getTicketId, getTicketPrice } from '../../http/ticketAPI';
+import { addToTickets } from '../../http/userAPI';
+// import Tooltip from './Tooltip';
 
-const HallDruzhbaNarodiv = () => {
-    return (
+const HallDruzhbaNarodiv = observer(() => {
+  const {user} = useContext(Context);
+  // const [seat, setSeat] = useState('');
+  // const [row, setRow] = useState('');
+  // const [floor, setFloor] = useState('');
+  // const [color, setColor] = useState('');
+  // const [showTooltip, setShowTooltip] = useState(false);
+  // const [tooltipX, setTooltipX] = useState(0);
+  // const [tooltipY, setTooltipY] = useState(0);
+  const circleRef = useRef();
+  // const wrapperRef = useRef();
+  const id = user.aboutConcert._id;
+  
+  // Отримати заброньовані квитки
+  // додати поле booked та reserved "true" та позначити ці місця сірим та червоним кольором
+  useEffect(()=>{
+    const fetchTickets = async() =>{
+      const {tickets} = await getTickets(id);
+      tickets.map(({_id, concertId, row, seat, floor, booked}) => {
+        if (concertId === id){
+          Array.from(circleRef.current.children).map(circle => {
+            if (circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor && booked){
+              circle.setAttribute('booked', true);
+              circle.style.fill = '#a7a7a7';
+            } 
+            else if (!user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+              circle.setAttribute('reserved', true);
+              circle.style.fill = 'red';
+            } 
+            else if (user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+              circle.style.fill = '#59ff00';
+            }return null
+          });
+        } return null
+      });
+    };
+    fetchTickets();
+  }, []);
+
+
+  const choosePlace = async(target) => {
+    //Перевірка чи заброньований, чи зарезервований квиток
+    if (!target.getAttribute('booked') && !target.getAttribute('reserved')){
+      //Формування квитка без ціни та ID 
+      const ticket = {
+          concertId: id,
+          row: target.getAttribute('row'),
+          seat: target.getAttribute('seat'),
+          floor: target.getAttribute('floor'),
+      };
+
+      const ticketId = await getTicketId(ticket);
+      const concertPrices = user.aboutConcert.price;
+      if(!ticketId.message) {
+        ticket._id = ticketId;
+        //Перевірка чи є даний квиток в сховищі
+        if (user.includesTicketToBook(ticket) || user.includesTicketId(ticket._id)){
+          ticket.price = await getTicketPrice(ticket._id);
+          switch(ticket.price){
+            case concertPrices[7] : target.style.fill = 'rgb(156, 17, 66)'; //червоний
+              break;
+            case concertPrices[6] : target.style.fill = 'rgb(207, 89, 207)'; //рожевий
+              break;
+            case concertPrices[5] : target.style.fill = 'rgb(83, 172, 77)'; //зелений
+              break;
+            case concertPrices[4] : target.style.fill = 'rgb(252, 178, 3)'; //помаранчевий 
+              break;
+            case concertPrices[3] : target.style.fill = 'rgb(0, 128, 128)'; //темнозелений
+              break;
+            case concertPrices[2] : target.style.fill = 'rgb(250, 42, 127)'; //кораловий
+              break;
+            case concertPrices[1] : target.style.fill = 'rgb(128, 102, 0)'; //коричневий
+              break;
+            case concertPrices[0] : target.style.fill = 'rgb(40, 21, 189)'; //синій
+              break;      
+          }
+          
+          //Видалити квиток з бази даних та оновити масив квитків у користувача
+          const {tickets} = await deleteTicket(ticket._id);
+          user.userTickets = tickets;
+          user.deleteTicket(ticket);
+        }
+      }
+      else {
+          //Формування ціни
+          let price;
+          switch(target.style.fill){
+            case 'rgb(156, 17, 66)': price = concertPrices[7]; //червоний
+              break;
+            case 'rgb(207, 89, 207)': price = concertPrices[6]; //рожевий
+              break;
+            case 'rgb(83, 172, 77)': price = concertPrices[5]; //зелений
+              break;
+            case 'rgb(252, 178, 3)': price = concertPrices[4]; //помаранчевий 
+              break;
+            case 'rgb(0, 128, 128)': price = concertPrices[3]; //темнозелений
+              break;
+            case 'rgb(250, 42, 127)': price = concertPrices[2]; //кораловий
+              break;
+            case 'rgb(128, 102, 0)': price = concertPrices[1]; //коричневий
+              break;
+            case 'rgb(40, 21, 189)': price = concertPrices[0]; //синій
+              break;      
+          }
+          ticket.price = price;
+          //Змінити колір місця (обраного квитка) на зелений
+          target.style.fill = '#59ff00';
+          //Створити квиток в базі даних
+          const data = await createTicket(ticket);
+          //Додати в масив квитків користувача
+          const {tickets} = await addToTickets(data.newTicket._id);
+          //Додати квиток до сховища
+          ticket._id = data.newTicket._id;
+          user.userTickets = tickets;
+          user.ticketsToBook = [...user.ticketsToBook, ticket];
+      };
+      console.table(ticket);
+      console.log(user.ticketsToBook, user.userTickets);
+      return;
+    } else return;   
+  };
+
+  // При наведенні курсора на місце (квиток) змінюєься розмір і додається кордон жовтого кольору
+  const enterCircle = (event) =>{
+    // const x = event.pageX - 68//- event.target.offsetLeft;
+    // const y = event.pageY - wrapperRef.current.offsetTop - 90//- event.target.offsetTop;
+    // setTooltipX(x);
+    // setTooltipY(y);
+    // setSeat(event.target.getAttribute("seat"))
+    // setRow(event.target.getAttribute("row"))
+    // setFloor(event.target.getAttribute("floor"))
+    // setColor(event.target.style.fill)
+    event.target.setAttribute('r', '2')
+    event.target.style.stroke = 'yellow'
+    event.target.style.strokeWidth = '0.5px'
+    //setShowTooltip(true)
+  }
+  // При прибирання курсора з місця (квитка) розмір повертається до стандартного та прибирається кордон
+  const leaveCircle = (event) =>{
+    event.target.setAttribute('r', '1.25')
+    event.target.style.stroke = 'none'
+    event.target.style.strokeWidth = '0'
+    //setShowTooltip(false)
+  }
+  // {showTooltip && <Tooltip seat={seat} row={row} floor={floor} color={color} x={tooltipX} y={tooltipY} />}
+  return (
         <div>
             <svg
    width="210mm"
@@ -977,11 +1126,15 @@ const HallDruzhbaNarodiv = () => {
          x="-169.47652"
          y="80.812836"
          role="line"
-         id="tspan1708">СЦЕНА</tspan></text></g><g
+         id="tspan1708">СЦЕНА</tspan></text></g>
+         <g ref={circleRef}
      label="Circle"
      groupmode="layer"
      id="layer1"
      style={{ display:"inline" }}><circle
+     onClick={e => choosePlace(e.target)} 
+     onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="path11"
        cx="126.32135"
@@ -991,6 +1144,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse11"
        cx="123.0465"
@@ -1000,6 +1156,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse12"
        cx="119.8715"
@@ -1009,6 +1168,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse13"
        cx="116.79644"
@@ -1018,6 +1180,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse14"
        cx="113.62139"
@@ -1027,6 +1192,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse15"
        cx="110.54633"
@@ -1036,6 +1204,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse16"
        cx="107.47132"
@@ -1045,6 +1216,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse17"
        cx="104.29624"
@@ -1054,6 +1228,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse18"
        cx="101.12122"
@@ -1063,6 +1240,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse19"
        cx="98.04615"
@@ -1072,6 +1252,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse20"
        cx="94.971153"
@@ -1081,6 +1264,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse21"
        cx="91.896088"
@@ -1090,6 +1276,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse22"
        cx="88.921074"
@@ -1099,6 +1288,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse23"
        cx="85.746071"
@@ -1108,6 +1300,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse24"
        cx="82.771057"
@@ -1117,6 +1312,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse25"
        cx="79.696075"
@@ -1126,6 +1324,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse26"
        cx="76.621063"
@@ -1135,6 +1336,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse27"
        cx="73.446053"
@@ -1144,6 +1348,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse28"
        cx="70.371063"
@@ -1153,6 +1360,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse29"
        cx="67.396034"
@@ -1162,6 +1372,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse30"
        cx="64.421021"
@@ -1171,6 +1384,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse31"
        cx="61.346004"
@@ -1180,6 +1396,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse32"
        cx="58.171009"
@@ -1189,6 +1408,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse33"
        cx="54.896015"
@@ -1198,6 +1420,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse34"
        cx="51.821011"
@@ -1207,6 +1432,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="ellipse35"
        cx="48.646008"
@@ -1216,6 +1444,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1"
        cx="45.470997"
@@ -1225,6 +1456,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle2"
        cx="42.196003"
@@ -1234,6 +1468,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle3"
        cx="39.120998"
@@ -1243,6 +1480,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle67"
        cx="129.59633"
@@ -1252,6 +1492,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle68"
        cx="126.3215"
@@ -1261,6 +1504,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle69"
        cx="123.14649"
@@ -1270,6 +1516,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle70"
        cx="120.07144"
@@ -1279,6 +1528,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle71"
        cx="116.89639"
@@ -1288,6 +1540,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle72"
        cx="113.82131"
@@ -1297,6 +1552,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle73"
        cx="110.74632"
@@ -1306,6 +1564,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle74"
        cx="107.57125"
@@ -1315,6 +1576,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle75"
        cx="104.3962"
@@ -1324,6 +1588,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle76"
        cx="101.32118"
@@ -1333,6 +1600,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle77"
        cx="98.246155"
@@ -1342,6 +1612,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle78"
        cx="95.171089"
@@ -1351,6 +1624,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle79"
        cx="92.196075"
@@ -1360,6 +1636,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle80"
        cx="89.021072"
@@ -1369,6 +1648,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle81"
        cx="86.046059"
@@ -1378,6 +1660,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle82"
        cx="82.971077"
@@ -1387,6 +1672,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle83"
        cx="79.896065"
@@ -1396,6 +1684,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle84"
        cx="76.721054"
@@ -1405,6 +1696,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle85"
        cx="73.646065"
@@ -1414,6 +1708,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle86"
        cx="70.671036"
@@ -1423,6 +1720,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle87"
        cx="67.696022"
@@ -1432,6 +1732,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle88"
        cx="64.621002"
@@ -1441,6 +1744,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle89"
        cx="61.446011"
@@ -1450,6 +1756,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle90"
        cx="58.171017"
@@ -1459,6 +1768,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle91"
        cx="55.096012"
@@ -1468,6 +1780,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle92"
        cx="51.921009"
@@ -1477,6 +1792,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle93"
        cx="48.745998"
@@ -1486,6 +1804,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle94"
        cx="45.471004"
@@ -1495,6 +1816,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle95"
        cx="42.396"
@@ -1504,6 +1828,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle144"
        cx="39.321003"
@@ -1513,6 +1840,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle145"
        cx="36.245998"
@@ -1522,6 +1852,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle146"
        cx="132.80026"
@@ -1531,6 +1864,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle147"
        cx="129.52545"
@@ -1540,6 +1876,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle148"
        cx="126.35051"
@@ -1549,6 +1888,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle149"
        cx="123.27546"
@@ -1558,6 +1900,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle150"
        cx="120.10038"
@@ -1567,6 +1912,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle151"
        cx="117.02533"
@@ -1576,6 +1924,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle152"
        cx="113.95033"
@@ -1585,6 +1936,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle153"
        cx="110.77525"
@@ -1594,6 +1948,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle154"
        cx="107.60022"
@@ -1603,6 +1960,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle155"
        cx="104.5252"
@@ -1612,6 +1972,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle156"
        cx="101.45017"
@@ -1621,6 +1984,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle157"
        cx="98.375099"
@@ -1630,6 +1996,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle158"
        cx="95.400085"
@@ -1639,6 +2008,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle159"
        cx="92.225082"
@@ -1648,6 +2020,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle160"
        cx="89.250069"
@@ -1657,6 +2032,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle161"
        cx="86.175087"
@@ -1666,6 +2044,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle162"
        cx="83.100075"
@@ -1675,6 +2056,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle163"
        cx="79.925064"
@@ -1684,6 +2068,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle164"
        cx="76.850075"
@@ -1693,6 +2080,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle165"
        cx="73.875046"
@@ -1702,6 +2092,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle166"
        cx="70.900032"
@@ -1711,6 +2104,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle167"
        cx="67.825012"
@@ -1720,6 +2116,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle168"
        cx="64.650017"
@@ -1729,6 +2128,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle169"
        cx="61.375019"
@@ -1738,6 +2140,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle170"
        cx="58.300014"
@@ -1747,6 +2152,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle171"
        cx="55.125011"
@@ -1756,6 +2164,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle172"
        cx="51.950001"
@@ -1765,6 +2176,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle173"
        cx="48.675007"
@@ -1774,6 +2188,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle174"
        cx="45.600002"
@@ -1783,6 +2200,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle175"
        cx="42.525005"
@@ -1792,6 +2212,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle176"
        cx="39.450001"
@@ -1801,6 +2224,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle206"
        cx="36.175003"
@@ -1810,6 +2236,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle207"
        cx="33.099998"
@@ -1819,6 +2248,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle272"
        cx="132.80026"
@@ -1828,6 +2260,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle273"
        cx="129.52545"
@@ -1837,6 +2272,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle274"
        cx="126.35051"
@@ -1846,6 +2284,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle275"
        cx="123.27546"
@@ -1855,6 +2296,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle276"
        cx="120.10038"
@@ -1864,6 +2308,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle277"
        cx="117.02533"
@@ -1873,6 +2320,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle278"
        cx="113.95033"
@@ -1882,6 +2332,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle279"
        cx="110.77525"
@@ -1891,6 +2344,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle280"
        cx="107.60022"
@@ -1900,6 +2356,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle281"
        cx="104.5252"
@@ -1909,6 +2368,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle282"
        cx="101.45017"
@@ -1918,6 +2380,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle283"
        cx="98.375099"
@@ -1927,6 +2392,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle284"
        cx="95.400085"
@@ -1936,6 +2404,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle285"
        cx="92.225082"
@@ -1945,6 +2416,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle286"
        cx="89.250069"
@@ -1954,6 +2428,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle287"
        cx="86.175087"
@@ -1963,6 +2440,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle288"
        cx="83.100075"
@@ -1972,6 +2452,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle289"
        cx="79.925064"
@@ -1981,6 +2464,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle290"
        cx="76.850075"
@@ -1990,6 +2476,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle291"
        cx="73.875046"
@@ -1999,6 +2488,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle292"
        cx="70.900032"
@@ -2008,6 +2500,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle293"
        cx="67.825012"
@@ -2017,6 +2512,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle294"
        cx="64.650017"
@@ -2026,6 +2524,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle295"
        cx="61.375019"
@@ -2035,6 +2536,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle296"
        cx="58.300014"
@@ -2044,6 +2548,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle297"
        cx="55.125011"
@@ -2053,6 +2560,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle298"
        cx="51.950001"
@@ -2062,6 +2572,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle299"
        cx="48.675007"
@@ -2071,6 +2584,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle300"
        cx="45.600002"
@@ -2080,6 +2596,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle301"
        cx="42.525005"
@@ -2089,6 +2608,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle302"
        cx="39.450001"
@@ -2098,6 +2620,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle303"
        cx="36.175003"
@@ -2107,6 +2632,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle304"
        cx="33.099998"
@@ -2116,6 +2644,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle336"
        cx="132.80026"
@@ -2125,6 +2656,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle337"
        cx="129.52545"
@@ -2134,6 +2668,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle338"
        cx="126.35051"
@@ -2143,6 +2680,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle339"
        cx="123.27546"
@@ -2152,6 +2692,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle340"
        cx="120.10038"
@@ -2161,6 +2704,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle341"
        cx="117.02533"
@@ -2170,6 +2716,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle342"
        cx="113.95033"
@@ -2179,6 +2728,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle343"
        cx="110.77525"
@@ -2188,6 +2740,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle344"
        cx="107.60022"
@@ -2197,6 +2752,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle345"
        cx="104.5252"
@@ -2206,6 +2764,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle346"
        cx="101.45017"
@@ -2215,6 +2776,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle347"
        cx="98.375099"
@@ -2224,6 +2788,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle348"
        cx="95.400085"
@@ -2233,6 +2800,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle349"
        cx="92.225082"
@@ -2242,6 +2812,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle350"
        cx="89.250069"
@@ -2251,6 +2824,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle351"
        cx="86.175087"
@@ -2260,6 +2836,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle352"
        cx="83.100075"
@@ -2269,6 +2848,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle353"
        cx="79.925064"
@@ -2278,6 +2860,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle354"
        cx="76.850075"
@@ -2287,6 +2872,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle355"
        cx="73.875046"
@@ -2296,6 +2884,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle356"
        cx="70.900032"
@@ -2305,6 +2896,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle357"
        cx="67.825012"
@@ -2314,6 +2908,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle358"
        cx="64.650017"
@@ -2323,6 +2920,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle359"
        cx="61.375019"
@@ -2332,6 +2932,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle360"
        cx="58.300014"
@@ -2341,6 +2944,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle361"
        cx="55.125011"
@@ -2350,6 +2956,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle362"
        cx="51.950001"
@@ -2359,6 +2968,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle363"
        cx="48.675007"
@@ -2368,6 +2980,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle364"
        cx="45.600002"
@@ -2377,6 +2992,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle365"
        cx="42.525005"
@@ -2386,6 +3004,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle366"
        cx="39.450001"
@@ -2395,6 +3016,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle367"
        cx="36.175003"
@@ -2404,6 +3028,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle368"
        cx="33.099998"
@@ -2413,6 +3040,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle400"
        cx="132.80026"
@@ -2422,6 +3052,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle401"
        cx="129.52545"
@@ -2431,6 +3064,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle402"
        cx="126.35051"
@@ -2440,6 +3076,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle403"
        cx="123.27546"
@@ -2449,6 +3088,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle404"
        cx="120.10038"
@@ -2458,6 +3100,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle405"
        cx="117.02533"
@@ -2467,6 +3112,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle406"
        cx="113.95033"
@@ -2476,6 +3124,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle407"
        cx="110.77525"
@@ -2485,6 +3136,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle408"
        cx="107.60022"
@@ -2494,6 +3148,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle409"
        cx="104.5252"
@@ -2503,6 +3160,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle410"
        cx="101.45017"
@@ -2512,6 +3172,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle411"
        cx="98.375099"
@@ -2521,6 +3184,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle412"
        cx="95.400085"
@@ -2530,6 +3196,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle413"
        cx="92.225082"
@@ -2539,6 +3208,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle414"
        cx="89.250069"
@@ -2548,6 +3220,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle415"
        cx="86.175087"
@@ -2557,6 +3232,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle416"
        cx="83.100075"
@@ -2566,6 +3244,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle417"
        cx="79.925064"
@@ -2575,6 +3256,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle418"
        cx="76.850075"
@@ -2584,6 +3268,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle419"
        cx="73.875046"
@@ -2593,6 +3280,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle420"
        cx="70.900032"
@@ -2602,6 +3292,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle421"
        cx="67.825012"
@@ -2611,6 +3304,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle422"
        cx="64.650017"
@@ -2620,6 +3316,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle423"
        cx="61.375019"
@@ -2629,6 +3328,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle424"
        cx="58.300014"
@@ -2638,6 +3340,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle425"
        cx="55.125011"
@@ -2647,6 +3352,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle426"
        cx="51.950001"
@@ -2656,6 +3364,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle427"
        cx="48.675007"
@@ -2665,6 +3376,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle428"
        cx="45.600002"
@@ -2674,6 +3388,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle429"
        cx="42.525005"
@@ -2683,6 +3400,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle430"
        cx="39.450001"
@@ -2692,6 +3412,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle431"
        cx="36.175003"
@@ -2701,6 +3424,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle432"
        cx="33.099998"
@@ -2710,6 +3436,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle464"
        cx="132.80026"
@@ -2719,6 +3448,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle465"
        cx="129.52545"
@@ -2728,6 +3460,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle466"
        cx="126.35051"
@@ -2737,6 +3472,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle467"
        cx="123.27546"
@@ -2746,6 +3484,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle468"
        cx="120.10038"
@@ -2755,6 +3496,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle469"
        cx="117.02533"
@@ -2764,6 +3508,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle470"
        cx="113.95033"
@@ -2773,6 +3520,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle471"
        cx="110.77525"
@@ -2782,6 +3532,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle472"
        cx="107.60022"
@@ -2791,6 +3544,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle473"
        cx="104.5252"
@@ -2800,6 +3556,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle474"
        cx="101.45017"
@@ -2809,6 +3568,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle475"
        cx="98.375099"
@@ -2818,6 +3580,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle476"
        cx="95.400085"
@@ -2827,6 +3592,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle477"
        cx="92.225082"
@@ -2836,6 +3604,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle478"
        cx="89.250069"
@@ -2845,6 +3616,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle479"
        cx="86.175087"
@@ -2854,6 +3628,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle480"
        cx="83.100075"
@@ -2863,6 +3640,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle481"
        cx="79.925064"
@@ -2872,6 +3652,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle482"
        cx="76.850075"
@@ -2881,6 +3664,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle483"
        cx="73.875046"
@@ -2890,6 +3676,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle484"
        cx="70.900032"
@@ -2899,6 +3688,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle485"
        cx="67.825012"
@@ -2908,6 +3700,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle486"
        cx="64.650017"
@@ -2917,6 +3712,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle487"
        cx="61.375019"
@@ -2926,6 +3724,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle488"
        cx="58.300014"
@@ -2935,6 +3736,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle489"
        cx="55.125011"
@@ -2944,6 +3748,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle490"
        cx="51.950001"
@@ -2953,6 +3760,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle491"
        cx="48.675007"
@@ -2962,6 +3772,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle492"
        cx="45.600002"
@@ -2971,6 +3784,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle493"
        cx="42.525005"
@@ -2980,6 +3796,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle494"
        cx="39.450001"
@@ -2989,6 +3808,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle495"
        cx="36.175003"
@@ -2998,6 +3820,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle496"
        cx="33.099998"
@@ -3007,6 +3832,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle528"
        cx="132.80026"
@@ -3016,6 +3844,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle529"
        cx="129.52545"
@@ -3025,6 +3856,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle530"
        cx="126.35051"
@@ -3034,6 +3868,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle531"
        cx="123.27546"
@@ -3043,6 +3880,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle532"
        cx="120.10038"
@@ -3052,6 +3892,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle533"
        cx="117.02533"
@@ -3061,6 +3904,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle534"
        cx="113.95033"
@@ -3070,6 +3916,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle535"
        cx="110.77525"
@@ -3079,6 +3928,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle536"
        cx="107.60022"
@@ -3088,6 +3940,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle537"
        cx="104.5252"
@@ -3097,6 +3952,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle538"
        cx="101.45017"
@@ -3106,6 +3964,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle539"
        cx="98.375099"
@@ -3115,6 +3976,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle540"
        cx="95.400085"
@@ -3124,6 +3988,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle541"
        cx="92.225082"
@@ -3133,6 +4000,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle542"
        cx="89.250069"
@@ -3142,6 +4012,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle543"
        cx="86.175087"
@@ -3151,6 +4024,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle544"
        cx="83.100075"
@@ -3160,6 +4036,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle545"
        cx="79.925064"
@@ -3169,6 +4048,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle546"
        cx="76.850075"
@@ -3178,6 +4060,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle547"
        cx="73.875046"
@@ -3187,6 +4072,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle548"
        cx="70.900032"
@@ -3196,6 +4084,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle549"
        cx="67.825012"
@@ -3205,6 +4096,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle550"
        cx="64.650017"
@@ -3214,6 +4108,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle551"
        cx="61.375019"
@@ -3223,6 +4120,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle552"
        cx="58.300014"
@@ -3232,6 +4132,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle553"
        cx="55.125011"
@@ -3241,6 +4144,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle554"
        cx="51.950001"
@@ -3250,6 +4156,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle555"
        cx="48.675007"
@@ -3259,6 +4168,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle556"
        cx="45.600002"
@@ -3268,6 +4180,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle557"
        cx="42.525005"
@@ -3277,6 +4192,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle558"
        cx="39.450001"
@@ -3286,6 +4204,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle559"
        cx="36.175003"
@@ -3295,6 +4216,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle560"
        cx="33.099998"
@@ -3304,6 +4228,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle592"
        cx="132.80026"
@@ -3313,6 +4240,9 @@ const HallDruzhbaNarodiv = () => {
        row="9"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle593"
        cx="129.52545"
@@ -3322,6 +4252,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle594"
        cx="126.35051"
@@ -3331,6 +4264,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle595"
        cx="123.27546"
@@ -3340,6 +4276,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle596"
        cx="120.10038"
@@ -3349,6 +4288,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle597"
        cx="117.02533"
@@ -3358,6 +4300,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle598"
        cx="113.95033"
@@ -3367,6 +4312,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle599"
        cx="110.77525"
@@ -3376,6 +4324,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle600"
        cx="107.60022"
@@ -3385,6 +4336,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle601"
        cx="104.5252"
@@ -3394,6 +4348,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle602"
        cx="101.45017"
@@ -3403,6 +4360,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle603"
        cx="98.375099"
@@ -3412,6 +4372,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle604"
        cx="95.400085"
@@ -3421,6 +4384,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle605"
        cx="92.225082"
@@ -3430,6 +4396,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle606"
        cx="89.250069"
@@ -3439,6 +4408,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle607"
        cx="86.175087"
@@ -3448,6 +4420,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle608"
        cx="83.100075"
@@ -3457,6 +4432,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle609"
        cx="79.925064"
@@ -3466,6 +4444,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle610"
        cx="76.850075"
@@ -3475,6 +4456,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle611"
        cx="73.875046"
@@ -3484,6 +4468,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle612"
        cx="70.900032"
@@ -3493,6 +4480,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle613"
        cx="67.825012"
@@ -3502,6 +4492,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle614"
        cx="64.650017"
@@ -3511,6 +4504,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle615"
        cx="61.375019"
@@ -3520,6 +4516,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle616"
        cx="58.300014"
@@ -3529,6 +4528,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle617"
        cx="55.125011"
@@ -3538,6 +4540,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle618"
        cx="51.950001"
@@ -3547,6 +4552,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle619"
        cx="48.675007"
@@ -3556,6 +4564,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle620"
        cx="45.600002"
@@ -3565,6 +4576,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle621"
        cx="42.525005"
@@ -3574,6 +4588,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle622"
        cx="39.450001"
@@ -3583,6 +4600,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle623"
        cx="36.175003"
@@ -3592,6 +4612,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle624"
        cx="33.099998"
@@ -3601,6 +4624,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle656"
        cx="132.80026"
@@ -3610,6 +4636,9 @@ const HallDruzhbaNarodiv = () => {
        row="10"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle657"
        cx="129.52545"
@@ -3619,6 +4648,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle658"
        cx="126.35051"
@@ -3628,6 +4660,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle659"
        cx="123.27546"
@@ -3637,6 +4672,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle660"
        cx="120.10038"
@@ -3646,6 +4684,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle661"
        cx="117.02533"
@@ -3655,6 +4696,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle662"
        cx="113.95033"
@@ -3664,6 +4708,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle663"
        cx="110.77525"
@@ -3673,6 +4720,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle664"
        cx="107.60022"
@@ -3682,6 +4732,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle665"
        cx="104.5252"
@@ -3691,6 +4744,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle666"
        cx="101.45017"
@@ -3700,6 +4756,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle667"
        cx="98.375099"
@@ -3709,6 +4768,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle668"
        cx="95.400085"
@@ -3718,6 +4780,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle669"
        cx="92.225082"
@@ -3727,6 +4792,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle670"
        cx="89.250069"
@@ -3736,6 +4804,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle671"
        cx="86.175087"
@@ -3745,6 +4816,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle672"
        cx="83.100075"
@@ -3754,6 +4828,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle673"
        cx="79.925064"
@@ -3763,6 +4840,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle674"
        cx="76.850075"
@@ -3772,6 +4852,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle675"
        cx="73.875046"
@@ -3781,6 +4864,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle676"
        cx="70.900032"
@@ -3790,6 +4876,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle677"
        cx="67.825012"
@@ -3799,6 +4888,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle678"
        cx="64.650017"
@@ -3808,6 +4900,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle679"
        cx="61.375019"
@@ -3817,6 +4912,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle680"
        cx="58.300014"
@@ -3826,6 +4924,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle681"
        cx="55.125011"
@@ -3835,6 +4936,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle682"
        cx="51.950001"
@@ -3844,6 +4948,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle683"
        cx="48.675007"
@@ -3853,6 +4960,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle684"
        cx="45.600002"
@@ -3862,6 +4972,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle685"
        cx="42.525005"
@@ -3871,6 +4984,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle686"
        cx="39.450001"
@@ -3880,6 +4996,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle687"
        cx="36.175003"
@@ -3889,6 +5008,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle688"
        cx="33.099998"
@@ -3898,6 +5020,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle720"
        cx="132.80026"
@@ -3907,6 +5032,9 @@ const HallDruzhbaNarodiv = () => {
        row="11"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle721"
        cx="129.52545"
@@ -3916,6 +5044,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle722"
        cx="126.35051"
@@ -3925,6 +5056,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle723"
        cx="123.27546"
@@ -3934,6 +5068,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle724"
        cx="120.10038"
@@ -3943,6 +5080,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle725"
        cx="117.02533"
@@ -3952,6 +5092,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle726"
        cx="113.95033"
@@ -3961,6 +5104,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle727"
        cx="110.77525"
@@ -3970,6 +5116,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle728"
        cx="107.60022"
@@ -3979,6 +5128,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle729"
        cx="104.5252"
@@ -3988,6 +5140,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle730"
        cx="101.45017"
@@ -3997,6 +5152,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle731"
        cx="98.375099"
@@ -4006,6 +5164,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle732"
        cx="95.400085"
@@ -4015,6 +5176,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle733"
        cx="92.225082"
@@ -4024,6 +5188,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle740"
        cx="70.900032"
@@ -4033,6 +5200,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle741"
        cx="67.825012"
@@ -4042,6 +5212,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle742"
        cx="64.650017"
@@ -4051,6 +5224,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle743"
        cx="61.375019"
@@ -4060,6 +5236,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle744"
        cx="58.300014"
@@ -4069,6 +5248,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle745"
        cx="55.125011"
@@ -4078,6 +5260,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle746"
        cx="51.950001"
@@ -4087,6 +5272,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle747"
        cx="48.675007"
@@ -4096,6 +5284,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle748"
        cx="45.600002"
@@ -4105,6 +5296,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle749"
        cx="42.525005"
@@ -4114,6 +5308,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle750"
        cx="39.450001"
@@ -4123,6 +5320,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle751"
        cx="36.175003"
@@ -4132,6 +5332,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle752"
        cx="33.099998"
@@ -4141,6 +5344,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle784"
        cx="132.80026"
@@ -4150,6 +5356,9 @@ const HallDruzhbaNarodiv = () => {
        row="12"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle785"
        cx="129.52545"
@@ -4159,6 +5368,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle786"
        cx="126.35051"
@@ -4168,6 +5380,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle787"
        cx="123.27546"
@@ -4177,6 +5392,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle788"
        cx="120.10038"
@@ -4186,6 +5404,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle789"
        cx="117.02533"
@@ -4195,6 +5416,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle790"
        cx="113.95033"
@@ -4204,6 +5428,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle791"
        cx="110.77525"
@@ -4213,6 +5440,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle792"
        cx="107.60022"
@@ -4222,6 +5452,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle793"
        cx="104.5252"
@@ -4231,6 +5464,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle794"
        cx="101.45017"
@@ -4240,6 +5476,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle795"
        cx="98.375099"
@@ -4249,6 +5488,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle796"
        cx="95.400085"
@@ -4258,6 +5500,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle797"
        cx="92.225082"
@@ -4267,6 +5512,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle804"
        cx="70.900032"
@@ -4276,6 +5524,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle805"
        cx="67.825012"
@@ -4285,6 +5536,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle806"
        cx="64.650017"
@@ -4294,6 +5548,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle807"
        cx="61.375019"
@@ -4303,6 +5560,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle808"
        cx="58.300014"
@@ -4312,6 +5572,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle809"
        cx="55.125011"
@@ -4321,6 +5584,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle810"
        cx="51.950001"
@@ -4330,6 +5596,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle811"
        cx="48.675007"
@@ -4339,6 +5608,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle812"
        cx="45.600002"
@@ -4348,6 +5620,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle813"
        cx="42.525005"
@@ -4357,6 +5632,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle814"
        cx="39.450001"
@@ -4366,6 +5644,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle815"
        cx="36.175003"
@@ -4375,6 +5656,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle816"
        cx="33.099998"
@@ -4384,6 +5668,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle848"
        cx="132.80026"
@@ -4393,6 +5680,9 @@ const HallDruzhbaNarodiv = () => {
        row="13"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle849"
        cx="129.52545"
@@ -4402,6 +5692,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle850"
        cx="126.35051"
@@ -4411,6 +5704,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle851"
        cx="123.27546"
@@ -4420,6 +5716,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle852"
        cx="120.10038"
@@ -4429,6 +5728,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle853"
        cx="117.02533"
@@ -4438,6 +5740,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle854"
        cx="113.95033"
@@ -4447,6 +5752,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle855"
        cx="110.77525"
@@ -4456,6 +5764,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle856"
        cx="107.60022"
@@ -4465,6 +5776,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle857"
        cx="104.5252"
@@ -4474,6 +5788,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle858"
        cx="101.45017"
@@ -4483,6 +5800,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle859"
        cx="98.375099"
@@ -4492,6 +5812,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle860"
        cx="95.400085"
@@ -4501,6 +5824,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle861"
        cx="92.225082"
@@ -4510,6 +5836,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle862"
        cx="89.250069"
@@ -4519,6 +5848,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle863"
        cx="86.175087"
@@ -4528,6 +5860,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle864"
        cx="83.100075"
@@ -4537,6 +5872,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle865"
        cx="79.925064"
@@ -4546,6 +5884,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle866"
        cx="76.850075"
@@ -4555,6 +5896,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle867"
        cx="73.875046"
@@ -4564,6 +5908,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle868"
        cx="70.900032"
@@ -4573,6 +5920,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle869"
        cx="67.825012"
@@ -4582,6 +5932,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle870"
        cx="64.650017"
@@ -4591,6 +5944,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle871"
        cx="61.375019"
@@ -4600,6 +5956,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle872"
        cx="58.300014"
@@ -4609,6 +5968,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle873"
        cx="55.125011"
@@ -4618,6 +5980,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle874"
        cx="51.950001"
@@ -4627,6 +5992,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle875"
        cx="48.675007"
@@ -4636,6 +6004,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle876"
        cx="45.600002"
@@ -4645,6 +6016,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle877"
        cx="42.525005"
@@ -4654,6 +6028,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle878"
        cx="39.450001"
@@ -4663,6 +6040,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle879"
        cx="36.175003"
@@ -4672,6 +6052,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle880"
        cx="33.099998"
@@ -4681,6 +6064,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle912"
        cx="132.80026"
@@ -4690,6 +6076,9 @@ const HallDruzhbaNarodiv = () => {
        row="14"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle913"
        cx="129.52545"
@@ -4699,6 +6088,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle914"
        cx="126.35051"
@@ -4708,6 +6100,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle915"
        cx="123.27546"
@@ -4717,6 +6112,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle916"
        cx="120.10038"
@@ -4726,6 +6124,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle917"
        cx="117.02533"
@@ -4735,6 +6136,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle918"
        cx="113.95033"
@@ -4744,6 +6148,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle919"
        cx="110.77525"
@@ -4753,6 +6160,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle920"
        cx="107.60022"
@@ -4762,6 +6172,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle921"
        cx="104.5252"
@@ -4771,6 +6184,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle922"
        cx="101.45017"
@@ -4780,6 +6196,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle923"
        cx="98.375099"
@@ -4789,6 +6208,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle924"
        cx="95.400085"
@@ -4798,6 +6220,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle925"
        cx="92.225082"
@@ -4807,6 +6232,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle926"
        cx="89.250069"
@@ -4816,6 +6244,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle927"
        cx="86.175087"
@@ -4825,6 +6256,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle928"
        cx="83.100075"
@@ -4834,6 +6268,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle929"
        cx="79.925064"
@@ -4843,6 +6280,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle930"
        cx="76.850075"
@@ -4852,6 +6292,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle931"
        cx="73.875046"
@@ -4861,6 +6304,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle932"
        cx="70.900032"
@@ -4870,6 +6316,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle933"
        cx="67.825012"
@@ -4879,6 +6328,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle934"
        cx="64.650017"
@@ -4888,6 +6340,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle935"
        cx="61.375019"
@@ -4897,6 +6352,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle936"
        cx="58.300014"
@@ -4906,6 +6364,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle937"
        cx="55.125011"
@@ -4915,6 +6376,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle938"
        cx="51.950001"
@@ -4924,6 +6388,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle939"
        cx="48.675007"
@@ -4933,6 +6400,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle940"
        cx="45.600002"
@@ -4942,6 +6412,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle941"
        cx="42.525005"
@@ -4951,6 +6424,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle942"
        cx="39.450001"
@@ -4960,6 +6436,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle943"
        cx="36.175003"
@@ -4969,6 +6448,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle944"
        cx="33.099998"
@@ -4978,6 +6460,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle976"
        cx="132.80026"
@@ -4987,6 +6472,9 @@ const HallDruzhbaNarodiv = () => {
        row="15"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle977"
        cx="129.52545"
@@ -4996,6 +6484,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle978"
        cx="126.35051"
@@ -5005,6 +6496,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle979"
        cx="123.27546"
@@ -5014,6 +6508,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle980"
        cx="120.10038"
@@ -5023,6 +6520,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle981"
        cx="117.02533"
@@ -5032,6 +6532,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle982"
        cx="113.95033"
@@ -5041,6 +6544,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle983"
        cx="110.77525"
@@ -5050,6 +6556,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle984"
        cx="107.60022"
@@ -5059,6 +6568,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle985"
        cx="104.5252"
@@ -5068,6 +6580,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle986"
        cx="101.45017"
@@ -5077,6 +6592,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle987"
        cx="98.375099"
@@ -5086,6 +6604,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle988"
        cx="95.400085"
@@ -5095,6 +6616,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle989"
        cx="92.225082"
@@ -5104,6 +6628,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle990"
        cx="89.250069"
@@ -5113,6 +6640,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle991"
        cx="86.175087"
@@ -5122,6 +6652,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle992"
        cx="83.100075"
@@ -5131,6 +6664,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle993"
        cx="79.925064"
@@ -5140,6 +6676,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle994"
        cx="76.850075"
@@ -5149,6 +6688,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle995"
        cx="73.875046"
@@ -5158,6 +6700,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle996"
        cx="70.900032"
@@ -5167,6 +6712,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle997"
        cx="67.825012"
@@ -5176,6 +6724,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle998"
        cx="64.650017"
@@ -5185,6 +6736,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle999"
        cx="61.375019"
@@ -5194,6 +6748,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1000"
        cx="58.300014"
@@ -5203,6 +6760,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1001"
        cx="55.125011"
@@ -5212,6 +6772,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1002"
        cx="51.950001"
@@ -5221,6 +6784,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1003"
        cx="48.675007"
@@ -5230,6 +6796,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1004"
        cx="45.600002"
@@ -5239,6 +6808,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1005"
        cx="42.525005"
@@ -5248,6 +6820,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1006"
        cx="39.450001"
@@ -5257,6 +6832,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1007"
        cx="36.175003"
@@ -5266,6 +6844,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1008"
        cx="33.099998"
@@ -5275,6 +6856,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="15"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1040"
        cx="132.80026"
@@ -5284,6 +6868,9 @@ const HallDruzhbaNarodiv = () => {
        row="16"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1041"
        cx="129.52545"
@@ -5293,6 +6880,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1042"
        cx="126.35051"
@@ -5302,6 +6892,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1043"
        cx="123.27546"
@@ -5311,6 +6904,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1044"
        cx="120.10038"
@@ -5320,6 +6916,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1045"
        cx="117.02533"
@@ -5329,6 +6928,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1046"
        cx="113.95033"
@@ -5338,6 +6940,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1047"
        cx="110.77525"
@@ -5347,6 +6952,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1048"
        cx="107.60022"
@@ -5356,6 +6964,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1049"
        cx="104.5252"
@@ -5365,6 +6976,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1050"
        cx="101.45017"
@@ -5374,6 +6988,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1051"
        cx="98.375099"
@@ -5383,6 +7000,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1052"
        cx="95.400085"
@@ -5392,6 +7012,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1053"
        cx="92.225082"
@@ -5401,6 +7024,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1054"
        cx="89.250069"
@@ -5410,6 +7036,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1055"
        cx="86.175087"
@@ -5419,6 +7048,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1056"
        cx="83.100075"
@@ -5428,6 +7060,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1057"
        cx="79.925064"
@@ -5437,6 +7072,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1058"
        cx="76.850075"
@@ -5446,6 +7084,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1059"
        cx="73.875046"
@@ -5455,6 +7096,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1060"
        cx="70.900032"
@@ -5464,6 +7108,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1061"
        cx="67.825012"
@@ -5473,6 +7120,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1062"
        cx="64.650017"
@@ -5482,6 +7132,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1063"
        cx="61.375019"
@@ -5491,6 +7144,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1064"
        cx="58.300014"
@@ -5500,6 +7156,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1065"
        cx="55.125011"
@@ -5509,6 +7168,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1066"
        cx="51.950001"
@@ -5518,6 +7180,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1067"
        cx="48.675007"
@@ -5527,6 +7192,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1068"
        cx="45.600002"
@@ -5536,6 +7204,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1069"
        cx="42.525005"
@@ -5545,6 +7216,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1070"
        cx="39.450001"
@@ -5554,6 +7228,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1071"
        cx="36.175003"
@@ -5563,6 +7240,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1072"
        cx="33.099998"
@@ -5572,6 +7252,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="16"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1104"
        cx="132.80026"
@@ -5581,6 +7264,9 @@ const HallDruzhbaNarodiv = () => {
        row="17"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1105"
        cx="129.52545"
@@ -5590,6 +7276,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1106"
        cx="126.35051"
@@ -5599,6 +7288,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1107"
        cx="123.27546"
@@ -5608,6 +7300,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1108"
        cx="120.10038"
@@ -5617,6 +7312,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1109"
        cx="117.02533"
@@ -5626,6 +7324,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1110"
        cx="113.95033"
@@ -5635,6 +7336,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1111"
        cx="110.77525"
@@ -5644,6 +7348,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1112"
        cx="107.60022"
@@ -5653,6 +7360,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1113"
        cx="104.5252"
@@ -5662,6 +7372,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1114"
        cx="101.45017"
@@ -5671,6 +7384,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1115"
        cx="98.375099"
@@ -5680,6 +7396,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1116"
        cx="95.400085"
@@ -5689,6 +7408,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1117"
        cx="92.225082"
@@ -5698,6 +7420,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1118"
        cx="89.250069"
@@ -5707,6 +7432,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1119"
        cx="86.175087"
@@ -5716,6 +7444,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1120"
        cx="83.100075"
@@ -5725,6 +7456,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1121"
        cx="79.925064"
@@ -5734,6 +7468,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1122"
        cx="76.850075"
@@ -5743,6 +7480,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1123"
        cx="73.875046"
@@ -5752,6 +7492,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1124"
        cx="70.900032"
@@ -5761,6 +7504,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1125"
        cx="67.825012"
@@ -5770,6 +7516,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1126"
        cx="64.650017"
@@ -5779,6 +7528,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1127"
        cx="61.375019"
@@ -5788,6 +7540,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1128"
        cx="58.300014"
@@ -5797,6 +7552,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1129"
        cx="55.125011"
@@ -5806,6 +7564,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1130"
        cx="51.950001"
@@ -5815,6 +7576,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1131"
        cx="48.675007"
@@ -5824,6 +7588,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1132"
        cx="45.600002"
@@ -5833,6 +7600,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1133"
        cx="42.525005"
@@ -5842,6 +7612,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1134"
        cx="39.450001"
@@ -5851,6 +7624,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1135"
        cx="36.175003"
@@ -5860,6 +7636,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1136"
        cx="33.099998"
@@ -5869,6 +7648,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="17"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1168"
        cx="132.80026"
@@ -5878,6 +7660,9 @@ const HallDruzhbaNarodiv = () => {
        row="18"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1169"
        cx="129.52545"
@@ -5887,6 +7672,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1170"
        cx="126.35051"
@@ -5896,6 +7684,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1171"
        cx="123.27546"
@@ -5905,6 +7696,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1172"
        cx="120.10038"
@@ -5914,6 +7708,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1173"
        cx="117.02533"
@@ -5923,6 +7720,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1174"
        cx="113.95033"
@@ -5932,6 +7732,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1175"
        cx="110.77525"
@@ -5941,6 +7744,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1176"
        cx="107.60022"
@@ -5950,6 +7756,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1177"
        cx="104.5252"
@@ -5959,6 +7768,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1178"
        cx="101.45017"
@@ -5968,6 +7780,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1179"
        cx="98.375099"
@@ -5977,6 +7792,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1180"
        cx="95.400085"
@@ -5986,6 +7804,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1181"
        cx="92.225082"
@@ -5995,6 +7816,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1182"
        cx="89.250069"
@@ -6004,6 +7828,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1183"
        cx="86.175087"
@@ -6013,6 +7840,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1184"
        cx="83.100075"
@@ -6022,6 +7852,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1185"
        cx="79.925064"
@@ -6031,6 +7864,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1186"
        cx="76.850075"
@@ -6040,6 +7876,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1187"
        cx="73.875046"
@@ -6049,6 +7888,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1188"
        cx="70.900032"
@@ -6058,6 +7900,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1189"
        cx="67.825012"
@@ -6067,6 +7912,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1190"
        cx="64.650017"
@@ -6076,6 +7924,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1191"
        cx="61.375019"
@@ -6085,6 +7936,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1192"
        cx="58.300014"
@@ -6094,6 +7948,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1193"
        cx="55.125011"
@@ -6103,6 +7960,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1194"
        cx="51.950001"
@@ -6112,6 +7972,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1195"
        cx="48.675007"
@@ -6121,6 +7984,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1196"
        cx="45.600002"
@@ -6130,6 +7996,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1197"
        cx="42.525005"
@@ -6139,6 +8008,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1198"
        cx="39.450001"
@@ -6148,6 +8020,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1199"
        cx="36.175003"
@@ -6157,6 +8032,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1200"
        cx="33.099998"
@@ -6166,6 +8044,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="18"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1232"
        cx="132.80026"
@@ -6175,6 +8056,9 @@ const HallDruzhbaNarodiv = () => {
        row="19"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1233"
        cx="129.52545"
@@ -6184,6 +8068,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1234"
        cx="126.35051"
@@ -6193,6 +8080,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1235"
        cx="123.27546"
@@ -6202,6 +8092,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1236"
        cx="120.10038"
@@ -6211,6 +8104,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1237"
        cx="117.02533"
@@ -6220,6 +8116,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1238"
        cx="113.95033"
@@ -6229,6 +8128,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1239"
        cx="110.77525"
@@ -6238,6 +8140,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1240"
        cx="107.60022"
@@ -6247,6 +8152,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1241"
        cx="104.5252"
@@ -6256,6 +8164,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1242"
        cx="101.45017"
@@ -6265,6 +8176,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1243"
        cx="98.375099"
@@ -6274,6 +8188,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1244"
        cx="95.400085"
@@ -6283,6 +8200,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1245"
        cx="92.225082"
@@ -6292,6 +8212,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1246"
        cx="89.250069"
@@ -6301,6 +8224,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1247"
        cx="86.175087"
@@ -6310,6 +8236,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1248"
        cx="83.100075"
@@ -6319,6 +8248,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1249"
        cx="79.925064"
@@ -6328,6 +8260,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1250"
        cx="76.850075"
@@ -6337,6 +8272,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1251"
        cx="73.875046"
@@ -6346,6 +8284,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1252"
        cx="70.900032"
@@ -6355,6 +8296,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1253"
        cx="67.825012"
@@ -6364,6 +8308,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1254"
        cx="64.650017"
@@ -6373,6 +8320,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1255"
        cx="61.375019"
@@ -6382,6 +8332,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1256"
        cx="58.300014"
@@ -6391,6 +8344,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1257"
        cx="55.125011"
@@ -6400,6 +8356,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1258"
        cx="51.950001"
@@ -6409,6 +8368,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1259"
        cx="48.675007"
@@ -6418,6 +8380,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1260"
        cx="45.600002"
@@ -6427,6 +8392,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1261"
        cx="42.525005"
@@ -6436,6 +8404,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1262"
        cx="39.450001"
@@ -6445,6 +8416,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1263"
        cx="36.175003"
@@ -6454,6 +8428,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1264"
        cx="33.099998"
@@ -6463,6 +8440,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="19"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1296"
        cx="132.80026"
@@ -6472,6 +8452,9 @@ const HallDruzhbaNarodiv = () => {
        row="20"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1297"
        cx="129.52545"
@@ -6481,6 +8464,9 @@ const HallDruzhbaNarodiv = () => {
        seat="2"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1298"
        cx="126.35051"
@@ -6490,6 +8476,9 @@ const HallDruzhbaNarodiv = () => {
        seat="3"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1299"
        cx="123.27546"
@@ -6499,6 +8488,9 @@ const HallDruzhbaNarodiv = () => {
        seat="4"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1300"
        cx="120.10038"
@@ -6508,6 +8500,9 @@ const HallDruzhbaNarodiv = () => {
        seat="5"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1301"
        cx="117.02533"
@@ -6517,6 +8512,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1302"
        cx="113.95033"
@@ -6526,6 +8524,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1303"
        cx="110.77525"
@@ -6535,6 +8536,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1304"
        cx="107.60022"
@@ -6544,6 +8548,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1305"
        cx="104.5252"
@@ -6553,6 +8560,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1306"
        cx="101.45017"
@@ -6562,6 +8572,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1307"
        cx="98.375099"
@@ -6571,6 +8584,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1308"
        cx="95.400085"
@@ -6580,6 +8596,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1309"
        cx="92.225082"
@@ -6589,6 +8608,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1310"
        cx="89.250069"
@@ -6598,6 +8620,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1311"
        cx="86.175087"
@@ -6607,6 +8632,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1312"
        cx="83.100075"
@@ -6616,6 +8644,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1313"
        cx="79.925064"
@@ -6625,6 +8656,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1314"
        cx="76.850075"
@@ -6634,6 +8668,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1315"
        cx="73.875046"
@@ -6643,6 +8680,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1316"
        cx="70.900032"
@@ -6652,6 +8692,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1317"
        cx="67.825012"
@@ -6661,6 +8704,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1318"
        cx="64.650017"
@@ -6670,6 +8716,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1319"
        cx="61.375019"
@@ -6679,6 +8728,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1320"
        cx="58.300014"
@@ -6688,6 +8740,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1321"
        cx="55.125011"
@@ -6697,6 +8752,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1322"
        cx="51.950001"
@@ -6706,6 +8764,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1323"
        cx="48.675007"
@@ -6715,6 +8776,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1324"
        cx="45.600002"
@@ -6724,6 +8788,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1325"
        cx="42.525005"
@@ -6733,6 +8800,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1326"
        cx="39.450001"
@@ -6742,6 +8812,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1327"
        cx="36.175003"
@@ -6751,6 +8824,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1328"
        cx="33.099998"
@@ -6760,6 +8836,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="20"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle4"
        cx="146.92715"
@@ -6770,6 +8849,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle5"
        cx="143.65234"
@@ -6780,6 +8862,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle6"
        cx="140.47742"
@@ -6790,6 +8875,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle7"
        cx="137.40242"
@@ -6800,6 +8888,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle8"
        cx="134.22736"
@@ -6810,6 +8901,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle9"
        cx="131.15236"
@@ -6820,6 +8914,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle10"
        cx="128.07741"
@@ -6830,6 +8927,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle11"
        cx="124.90232"
@@ -6840,6 +8940,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle12"
        cx="121.72729"
@@ -6850,6 +8953,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle13"
        cx="119.10011"
@@ -6859,6 +8965,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle14"
        cx="116.02508"
@@ -6868,6 +8977,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle15"
        cx="112.95001"
@@ -6877,6 +8989,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle16"
        cx="109.97495"
@@ -6886,6 +9001,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle17"
        cx="106.79996"
@@ -6895,6 +9013,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle18"
        cx="103.82501"
@@ -6904,6 +9025,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle19"
        cx="100.75007"
@@ -6913,6 +9037,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle20"
        cx="97.675018"
@@ -6922,6 +9049,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle21"
        cx="94.500008"
@@ -6931,6 +9061,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle22"
        cx="91.425018"
@@ -6940,6 +9073,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle23"
        cx="88.449989"
@@ -6949,6 +9085,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle24"
        cx="85.474976"
@@ -6958,6 +9097,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle25"
        cx="78.366982"
@@ -6967,6 +9109,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle26"
        cx="75.191986"
@@ -6976,6 +9121,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle27"
        cx="71.916985"
@@ -6985,6 +9133,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle28"
        cx="68.84198"
@@ -6994,6 +9145,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle29"
        cx="65.666977"
@@ -7003,6 +9157,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle30"
        cx="62.491962"
@@ -7012,6 +9169,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle31"
        cx="59.216957"
@@ -7021,6 +9181,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle32"
        cx="56.141956"
@@ -7030,6 +9193,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle33"
        cx="53.066959"
@@ -7039,6 +9205,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle34"
        cx="49.991955"
@@ -7048,6 +9217,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle35"
        cx="46.716957"
@@ -7057,6 +9229,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle36"
        cx="43.641953"
@@ -7066,6 +9241,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle37"
        cx="-32.075348"
@@ -7076,6 +9254,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle38"
        cx="-35.150364"
@@ -7086,6 +9267,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle39"
        cx="-38.225327"
@@ -7096,6 +9280,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle40"
        cx="-41.500401"
@@ -7106,6 +9293,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle41"
        cx="-44.57534"
@@ -7116,6 +9306,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle42"
        cx="-47.650345"
@@ -7126,6 +9319,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle43"
        cx="-50.72538"
@@ -7136,6 +9332,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle44"
        cx="-54.000362"
@@ -7146,6 +9345,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle45"
        cx="-57.075413"
@@ -7156,6 +9358,9 @@ const HallDruzhbaNarodiv = () => {
        row="1"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle256"
        cx="142.95157"
@@ -7166,6 +9371,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle257"
        cx="139.67676"
@@ -7176,6 +9384,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle258"
        cx="136.50183"
@@ -7186,6 +9397,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle259"
        cx="133.42683"
@@ -7196,6 +9410,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle260"
        cx="130.25177"
@@ -7206,6 +9423,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle261"
        cx="127.17678"
@@ -7216,6 +9436,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle262"
        cx="124.10183"
@@ -7226,6 +9449,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle263"
        cx="120.9267"
@@ -7236,6 +9462,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle270"
        cx="104.9821"
@@ -7246,6 +9475,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle271"
        cx="119.10011"
@@ -7255,6 +9487,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle305"
        cx="116.02508"
@@ -7264,6 +9499,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle306"
        cx="112.95001"
@@ -7273,6 +9511,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle307"
        cx="109.97495"
@@ -7282,6 +9523,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle308"
        cx="106.79996"
@@ -7291,6 +9535,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle309"
        cx="103.82501"
@@ -7300,6 +9547,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle310"
        cx="100.75007"
@@ -7309,6 +9559,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle311"
        cx="97.675018"
@@ -7318,6 +9571,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle312"
        cx="94.500008"
@@ -7327,6 +9583,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle313"
        cx="91.425018"
@@ -7336,6 +9595,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle314"
        cx="88.449989"
@@ -7345,6 +9607,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle315"
        cx="85.474976"
@@ -7354,6 +9619,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle369"
        cx="78.366982"
@@ -7363,6 +9631,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle370"
        cx="75.191986"
@@ -7372,6 +9643,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle371"
        cx="71.916985"
@@ -7381,6 +9655,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle372"
        cx="68.84198"
@@ -7390,6 +9667,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle373"
        cx="65.666977"
@@ -7399,6 +9679,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle374"
        cx="62.491962"
@@ -7408,6 +9691,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle375"
        cx="59.216957"
@@ -7417,6 +9703,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle376"
        cx="56.141956"
@@ -7426,6 +9715,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle377"
        cx="53.066959"
@@ -7435,6 +9727,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle378"
        cx="49.991955"
@@ -7444,6 +9739,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle379"
        cx="46.716957"
@@ -7453,6 +9751,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle380"
        cx="43.641953"
@@ -7462,6 +9763,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle433"
        cx="-17.585762"
@@ -7472,6 +9776,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle497"
        cx="-31.135361"
@@ -7482,6 +9789,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle498"
        cx="-34.210358"
@@ -7492,6 +9802,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle499"
        cx="-37.485371"
@@ -7502,6 +9815,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle500"
        cx="-40.560379"
@@ -7512,6 +9828,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle501"
        cx="-43.635376"
@@ -7522,6 +9841,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle502"
        cx="-46.710289"
@@ -7532,6 +9854,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle503"
        cx="-49.985344"
@@ -7542,6 +9867,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle504"
        cx="-53.060375"
@@ -7552,6 +9880,9 @@ const HallDruzhbaNarodiv = () => {
        row="2"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle561"
        cx="136.37692"
@@ -7562,6 +9893,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle562"
        cx="133.10211"
@@ -7572,6 +9906,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle563"
        cx="129.92719"
@@ -7582,6 +9919,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle564"
        cx="126.8522"
@@ -7592,6 +9932,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle565"
        cx="123.67714"
@@ -7602,6 +9945,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle566"
        cx="120.60212"
@@ -7612,6 +9958,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle625"
        cx="103.63011"
@@ -7622,6 +9971,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle626"
        cx="101.83109"
@@ -7632,6 +9984,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle734"
        cx="100.17862"
@@ -7642,6 +9997,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle735"
        cx="116.12541"
@@ -7651,6 +10009,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle736"
        cx="113.05039"
@@ -7660,6 +10021,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle737"
        cx="109.97534"
@@ -7669,6 +10033,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle738"
        cx="107.00026"
@@ -7678,6 +10045,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle739"
        cx="103.82525"
@@ -7687,6 +10057,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle753"
        cx="100.85026"
@@ -7696,6 +10069,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle754"
        cx="97.775345"
@@ -7705,6 +10081,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle755"
        cx="94.700294"
@@ -7714,6 +10093,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle756"
        cx="91.525284"
@@ -7723,6 +10105,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle757"
        cx="88.450294"
@@ -7732,6 +10117,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle758"
        cx="85.475266"
@@ -7741,6 +10129,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle881"
        cx="78.366554"
@@ -7750,6 +10141,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle945"
        cx="75.191978"
@@ -7759,6 +10153,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle946"
        cx="72.016983"
@@ -7768,6 +10165,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle947"
        cx="68.741982"
@@ -7777,6 +10177,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle948"
        cx="65.666977"
@@ -7786,6 +10189,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle949"
        cx="62.49197"
@@ -7795,6 +10201,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle950"
        cx="59.316959"
@@ -7804,6 +10213,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle951"
        cx="56.041954"
@@ -7813,6 +10225,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle952"
        cx="52.966953"
@@ -7822,6 +10237,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle953"
        cx="49.891956"
@@ -7831,6 +10249,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle954"
        cx="46.816952"
@@ -7840,6 +10261,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle955"
        cx="43.541954"
@@ -7849,6 +10273,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle956"
        cx="40.466949"
@@ -7858,6 +10285,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle957"
        cx="-16.079727"
@@ -7868,6 +10298,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1009"
        cx="-30.910572"
@@ -7878,6 +10311,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1010"
        cx="-33.985634"
@@ -7888,6 +10324,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1011"
        cx="-37.260616"
@@ -7898,6 +10337,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1012"
        cx="-40.335579"
@@ -7908,6 +10350,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1013"
        cx="-43.410625"
@@ -7918,6 +10363,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1014"
        cx="-46.485565"
@@ -7928,6 +10376,9 @@ const HallDruzhbaNarodiv = () => {
        row="3"
        floor="balcony"
        transform="rotate(-57.585857)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1073"
        cx="129.94051"
@@ -7938,6 +10389,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1074"
        cx="126.6657"
@@ -7948,6 +10402,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1075"
        cx="123.49079"
@@ -7958,6 +10415,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1076"
        cx="120.41577"
@@ -7968,6 +10428,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1137"
        cx="49.76321"
@@ -7978,6 +10441,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1138"
        cx="50.974422"
@@ -7988,6 +10454,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1201"
        cx="52.324791"
@@ -7998,6 +10467,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1202"
        cx="53.767723"
@@ -8008,6 +10480,9 @@ const HallDruzhbaNarodiv = () => {
        row="4"
        floor="balcony"
        transform="rotate(57.449315)" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1265"
        cx="130.68359"
@@ -8017,6 +10492,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1266"
        cx="127.40876"
@@ -8026,6 +10504,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1267"
        cx="124.2338"
@@ -8035,6 +10516,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1268"
        cx="121.15878"
@@ -8044,6 +10528,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1269"
        cx="117.9837"
@@ -8053,6 +10540,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1270"
        cx="108.02953"
@@ -8062,6 +10552,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1271"
        cx="104.95446"
@@ -8071,6 +10564,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1272"
        cx="101.77938"
@@ -8080,6 +10576,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1273"
        cx="98.604378"
@@ -8089,6 +10588,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1274"
        cx="95.529366"
@@ -8098,6 +10600,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1275"
        cx="92.454369"
@@ -8107,6 +10612,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1276"
        cx="89.379272"
@@ -8116,6 +10624,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1277"
        cx="86.40419"
@@ -8125,6 +10636,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1278"
        cx="83.229218"
@@ -8134,6 +10648,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1279"
        cx="80.25425"
@@ -8143,6 +10660,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1280"
        cx="77.179268"
@@ -8152,6 +10672,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1281"
        cx="74.104233"
@@ -8161,6 +10684,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1282"
        cx="70.929222"
@@ -8170,6 +10696,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1283"
        cx="67.854233"
@@ -8179,6 +10708,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1284"
        cx="64.879204"
@@ -8188,6 +10720,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1285"
        cx="61.90419"
@@ -8197,6 +10732,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1286"
        cx="58.82917"
@@ -8206,6 +10744,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1287"
        cx="55.654175"
@@ -8215,6 +10756,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1288"
        cx="45.599998"
@@ -8224,6 +10768,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1289"
        cx="42.524994"
@@ -8233,6 +10780,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1290"
        cx="39.349991"
@@ -8242,6 +10792,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1291"
        cx="36.17498"
@@ -8251,6 +10804,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1292"
        cx="32.899986"
@@ -8260,6 +10816,9 @@ const HallDruzhbaNarodiv = () => {
        row="5"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1329"
        cx="130.68359"
@@ -8269,6 +10828,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1330"
        cx="127.40876"
@@ -8278,6 +10840,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1331"
        cx="124.2338"
@@ -8287,6 +10852,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1332"
        cx="121.15878"
@@ -8296,6 +10864,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1333"
        cx="117.9837"
@@ -8305,6 +10876,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1334"
        cx="108.02953"
@@ -8314,6 +10888,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1335"
        cx="104.95446"
@@ -8323,6 +10900,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1336"
        cx="101.77938"
@@ -8332,6 +10912,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1337"
        cx="98.604378"
@@ -8341,6 +10924,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1338"
        cx="95.529366"
@@ -8350,6 +10936,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1339"
        cx="92.454369"
@@ -8359,6 +10948,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1340"
        cx="89.379272"
@@ -8368,6 +10960,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1341"
        cx="86.40419"
@@ -8377,6 +10972,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1342"
        cx="83.229218"
@@ -8386,6 +10984,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1343"
        cx="80.25425"
@@ -8395,6 +10996,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1344"
        cx="77.179268"
@@ -8404,6 +11008,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1345"
        cx="74.104233"
@@ -8413,6 +11020,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1346"
        cx="70.929222"
@@ -8422,6 +11032,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1347"
        cx="67.854233"
@@ -8431,6 +11044,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1348"
        cx="64.879204"
@@ -8440,6 +11056,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1349"
        cx="61.90419"
@@ -8449,6 +11068,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1350"
        cx="58.82917"
@@ -8458,6 +11080,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1351"
        cx="55.654175"
@@ -8467,6 +11092,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1352"
        cx="45.599998"
@@ -8476,6 +11104,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1353"
        cx="42.524994"
@@ -8485,6 +11116,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1354"
        cx="39.349991"
@@ -8494,6 +11128,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1355"
        cx="36.17498"
@@ -8503,6 +11140,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1356"
        cx="32.899986"
@@ -8512,6 +11152,9 @@ const HallDruzhbaNarodiv = () => {
        row="6"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1415"
        cx="130.68359"
@@ -8521,6 +11164,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1416"
        cx="127.40876"
@@ -8530,6 +11176,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1417"
        cx="124.2338"
@@ -8539,6 +11188,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1418"
        cx="121.15878"
@@ -8548,6 +11200,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1419"
        cx="117.9837"
@@ -8557,6 +11212,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1420"
        cx="108.02953"
@@ -8566,6 +11224,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1421"
        cx="104.95446"
@@ -8575,6 +11236,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1422"
        cx="101.77938"
@@ -8584,6 +11248,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1423"
        cx="98.604378"
@@ -8593,6 +11260,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1424"
        cx="95.529366"
@@ -8602,6 +11272,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1425"
        cx="92.454369"
@@ -8611,6 +11284,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1426"
        cx="89.379272"
@@ -8620,6 +11296,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1427"
        cx="86.40419"
@@ -8629,6 +11308,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1428"
        cx="83.229218"
@@ -8638,6 +11320,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1429"
        cx="80.25425"
@@ -8647,6 +11332,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1430"
        cx="77.179268"
@@ -8656,6 +11344,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1431"
        cx="74.104233"
@@ -8665,6 +11356,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1432"
        cx="70.929222"
@@ -8674,6 +11368,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1433"
        cx="67.854233"
@@ -8683,6 +11380,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1434"
        cx="64.879204"
@@ -8692,6 +11392,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1435"
        cx="61.90419"
@@ -8701,6 +11404,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1436"
        cx="58.82917"
@@ -8710,6 +11416,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1437"
        cx="55.654175"
@@ -8719,6 +11428,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1438"
        cx="45.599998"
@@ -8728,6 +11440,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1439"
        cx="42.524994"
@@ -8737,6 +11452,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1440"
        cx="39.349991"
@@ -8746,6 +11464,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1441"
        cx="36.17498"
@@ -8755,6 +11476,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1442"
        cx="32.899986"
@@ -8764,6 +11488,9 @@ const HallDruzhbaNarodiv = () => {
        row="7"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1492"
        cx="130.68359"
@@ -8773,6 +11500,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1493"
        cx="127.40876"
@@ -8782,6 +11512,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1494"
        cx="124.2338"
@@ -8791,6 +11524,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1495"
        cx="121.15878"
@@ -8800,6 +11536,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1496"
        cx="117.9837"
@@ -8809,6 +11548,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1497"
        cx="108.02953"
@@ -8818,6 +11560,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1498"
        cx="104.95446"
@@ -8827,6 +11572,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1499"
        cx="101.77938"
@@ -8836,6 +11584,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1500"
        cx="98.604378"
@@ -8845,6 +11596,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1501"
        cx="95.529366"
@@ -8854,6 +11608,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1502"
        cx="92.454369"
@@ -8863,6 +11620,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1503"
        cx="89.379272"
@@ -8872,6 +11632,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1504"
        cx="86.40419"
@@ -8881,6 +11644,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1505"
        cx="83.229218"
@@ -8890,6 +11656,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1506"
        cx="80.25425"
@@ -8899,6 +11668,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1507"
        cx="77.179268"
@@ -8908,6 +11680,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1508"
        cx="74.104233"
@@ -8917,6 +11692,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1509"
        cx="70.929222"
@@ -8926,6 +11704,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1510"
        cx="67.854233"
@@ -8935,6 +11716,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1511"
        cx="64.879204"
@@ -8944,6 +11728,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1512"
        cx="61.90419"
@@ -8953,6 +11740,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1513"
        cx="58.82917"
@@ -8962,6 +11752,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1514"
        cx="55.654175"
@@ -8971,6 +11764,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1515"
        cx="45.599998"
@@ -8980,6 +11776,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1516"
        cx="42.524994"
@@ -8989,6 +11788,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1517"
        cx="39.349991"
@@ -8998,6 +11800,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1518"
        cx="36.17498"
@@ -9007,6 +11812,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1519"
        cx="32.899986"
@@ -9016,6 +11824,9 @@ const HallDruzhbaNarodiv = () => {
        row="8"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1560"
        cx="143.283"
@@ -9025,6 +11836,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1561"
        cx="140.00818"
@@ -9034,6 +11848,9 @@ const HallDruzhbaNarodiv = () => {
        row="9"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1562"
        cx="136.83325"
@@ -9043,6 +11860,9 @@ const HallDruzhbaNarodiv = () => {
        row="9"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1563"
        cx="133.75827"
@@ -9052,6 +11872,9 @@ const HallDruzhbaNarodiv = () => {
        row="9"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1564"
        cx="130.584"
@@ -9061,6 +11884,9 @@ const HallDruzhbaNarodiv = () => {
        row="9"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1568"
        cx="127.409"
@@ -9070,6 +11896,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1569"
        cx="124.334"
@@ -9079,6 +11908,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1570"
        cx="121.159"
@@ -9088,6 +11920,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1571"
        cx="117.984"
@@ -9097,6 +11932,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1574"
        cx="108.029"
@@ -9106,6 +11944,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1575"
        cx="104.95401"
@@ -9115,6 +11956,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1576"
        cx="101.8789"
@@ -9124,6 +11968,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1577"
        cx="98.903847"
@@ -9133,6 +11980,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1578"
        cx="95.728859"
@@ -9142,6 +11992,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1579"
        cx="92.753891"
@@ -9151,6 +12004,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1580"
        cx="89.678909"
@@ -9160,6 +12016,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1581"
        cx="86.603874"
@@ -9169,6 +12028,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1582"
        cx="83.428864"
@@ -9178,6 +12040,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1583"
        cx="80.353874"
@@ -9187,6 +12052,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1584"
        cx="77.378845"
@@ -9196,6 +12064,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1585"
        cx="74.403831"
@@ -9205,6 +12076,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1586"
        cx="71.328812"
@@ -9214,6 +12088,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1587"
        cx="68.153816"
@@ -9223,6 +12100,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1588"
        cx="64.978996"
@@ -9232,6 +12112,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1589"
        cx="61.903999"
@@ -9241,6 +12124,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1590"
        cx="58.728996"
@@ -9250,6 +12136,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1591"
        cx="55.553986"
@@ -9259,6 +12148,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1608"
        cx="45.599998"
@@ -9268,6 +12160,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1609"
        cx="42.524998"
@@ -9277,6 +12172,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1610"
        cx="39.450001"
@@ -9286,6 +12184,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1611"
        cx="36.374996"
@@ -9295,6 +12196,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1612"
        cx="33.099998"
@@ -9304,6 +12208,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1613"
        cx="30.024998"
@@ -9313,6 +12220,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1614"
        cx="26.850166"
@@ -9322,6 +12232,9 @@ const HallDruzhbaNarodiv = () => {
        seat="34"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1615"
        cx="23.775169"
@@ -9331,6 +12244,9 @@ const HallDruzhbaNarodiv = () => {
        seat="35"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1616"
        cx="20.700161"
@@ -9340,6 +12256,9 @@ const HallDruzhbaNarodiv = () => {
        seat="36"
        row="9"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1624"
        cx="143.283"
@@ -9349,6 +12268,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1625"
        cx="140.00818"
@@ -9358,6 +12280,9 @@ const HallDruzhbaNarodiv = () => {
        row="10"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1626"
        cx="136.83325"
@@ -9367,6 +12292,9 @@ const HallDruzhbaNarodiv = () => {
        row="10"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1627"
        cx="133.75827"
@@ -9376,6 +12304,9 @@ const HallDruzhbaNarodiv = () => {
        row="10"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1628"
        cx="130.584"
@@ -9385,6 +12316,9 @@ const HallDruzhbaNarodiv = () => {
        row="10"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1629"
        cx="127.409"
@@ -9394,6 +12328,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1630"
        cx="124.334"
@@ -9403,6 +12340,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1631"
        cx="121.159"
@@ -9412,6 +12352,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1632"
        cx="117.984"
@@ -9421,6 +12364,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1640"
        cx="108.029"
@@ -9430,6 +12376,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1641"
        cx="104.95401"
@@ -9439,6 +12388,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1642"
        cx="101.8789"
@@ -9448,6 +12400,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1643"
        cx="98.903847"
@@ -9457,6 +12412,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1644"
        cx="95.728859"
@@ -9466,6 +12424,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1645"
        cx="92.753891"
@@ -9475,6 +12436,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1646"
        cx="89.678909"
@@ -9484,6 +12448,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1647"
        cx="86.603874"
@@ -9493,6 +12460,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1648"
        cx="83.428864"
@@ -9502,6 +12472,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1649"
        cx="80.353874"
@@ -9511,6 +12484,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1650"
        cx="77.378845"
@@ -9520,6 +12496,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1651"
        cx="74.403831"
@@ -9529,6 +12508,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1652"
        cx="71.328812"
@@ -9538,6 +12520,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1653"
        cx="68.153816"
@@ -9547,6 +12532,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1654"
        cx="64.978996"
@@ -9556,6 +12544,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1655"
        cx="61.903999"
@@ -9565,6 +12556,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1656"
        cx="58.728996"
@@ -9574,6 +12568,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1657"
        cx="55.553986"
@@ -9583,6 +12580,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1674"
        cx="45.599998"
@@ -9592,6 +12592,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1675"
        cx="42.524998"
@@ -9601,6 +12604,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1676"
        cx="39.450001"
@@ -9610,6 +12616,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1677"
        cx="36.374996"
@@ -9619,6 +12628,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1678"
        cx="33.099998"
@@ -9628,6 +12640,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1679"
        cx="30.024998"
@@ -9637,6 +12652,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1680"
        cx="26.850166"
@@ -9646,6 +12664,9 @@ const HallDruzhbaNarodiv = () => {
        seat="34"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1681"
        cx="23.775169"
@@ -9655,6 +12676,9 @@ const HallDruzhbaNarodiv = () => {
        seat="35"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1682"
        cx="20.700161"
@@ -9664,6 +12688,9 @@ const HallDruzhbaNarodiv = () => {
        seat="36"
        row="10"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1690"
        cx="143.283"
@@ -9673,6 +12700,9 @@ const HallDruzhbaNarodiv = () => {
        seat="1"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1691"
        cx="140.00818"
@@ -9682,6 +12712,9 @@ const HallDruzhbaNarodiv = () => {
        row="11"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1692"
        cx="136.83325"
@@ -9691,6 +12724,9 @@ const HallDruzhbaNarodiv = () => {
        row="11"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1693"
        cx="133.75827"
@@ -9700,6 +12736,9 @@ const HallDruzhbaNarodiv = () => {
        row="11"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1694"
        cx="130.584"
@@ -9709,6 +12748,9 @@ const HallDruzhbaNarodiv = () => {
        row="11"
        floor="balcony"
        r="1.25" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1695"
        cx="127.409"
@@ -9718,6 +12760,9 @@ const HallDruzhbaNarodiv = () => {
        seat="6"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1696"
        cx="124.334"
@@ -9727,6 +12772,9 @@ const HallDruzhbaNarodiv = () => {
        seat="7"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1697"
        cx="121.159"
@@ -9736,6 +12784,9 @@ const HallDruzhbaNarodiv = () => {
        seat="8"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1698"
        cx="117.984"
@@ -9745,6 +12796,9 @@ const HallDruzhbaNarodiv = () => {
        seat="9"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1706"
        cx="108.029"
@@ -9754,6 +12808,9 @@ const HallDruzhbaNarodiv = () => {
        seat="10"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1707"
        cx="104.95401"
@@ -9763,6 +12820,9 @@ const HallDruzhbaNarodiv = () => {
        seat="11"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1708"
        cx="101.8789"
@@ -9772,6 +12832,9 @@ const HallDruzhbaNarodiv = () => {
        seat="12"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1709"
        cx="98.903847"
@@ -9781,6 +12844,9 @@ const HallDruzhbaNarodiv = () => {
        seat="13"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1710"
        cx="95.728859"
@@ -9790,6 +12856,9 @@ const HallDruzhbaNarodiv = () => {
        seat="14"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1711"
        cx="92.753891"
@@ -9799,6 +12868,9 @@ const HallDruzhbaNarodiv = () => {
        seat="15"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1712"
        cx="89.678909"
@@ -9808,6 +12880,9 @@ const HallDruzhbaNarodiv = () => {
        seat="16"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1713"
        cx="86.603874"
@@ -9817,6 +12892,9 @@ const HallDruzhbaNarodiv = () => {
        seat="17"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1714"
        cx="83.428864"
@@ -9826,6 +12904,9 @@ const HallDruzhbaNarodiv = () => {
        seat="18"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1715"
        cx="80.353874"
@@ -9835,6 +12916,9 @@ const HallDruzhbaNarodiv = () => {
        seat="19"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1716"
        cx="77.378845"
@@ -9844,6 +12928,9 @@ const HallDruzhbaNarodiv = () => {
        seat="20"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1717"
        cx="74.403831"
@@ -9853,6 +12940,9 @@ const HallDruzhbaNarodiv = () => {
        seat="21"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1718"
        cx="71.328812"
@@ -9862,6 +12952,9 @@ const HallDruzhbaNarodiv = () => {
        seat="22"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1719"
        cx="68.153816"
@@ -9871,6 +12964,9 @@ const HallDruzhbaNarodiv = () => {
        seat="23"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1720"
        cx="64.978996"
@@ -9880,6 +12976,9 @@ const HallDruzhbaNarodiv = () => {
        seat="24"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1721"
        cx="61.903999"
@@ -9889,6 +12988,9 @@ const HallDruzhbaNarodiv = () => {
        seat="25"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1722"
        cx="58.728996"
@@ -9898,6 +13000,9 @@ const HallDruzhbaNarodiv = () => {
        seat="26"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1723"
        cx="55.553986"
@@ -9907,6 +13012,9 @@ const HallDruzhbaNarodiv = () => {
        seat="27"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1740"
        cx="52.179001"
@@ -9916,6 +13024,9 @@ const HallDruzhbaNarodiv = () => {
        seat="28"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1741"
        cx="48.903999"
@@ -9925,6 +13036,9 @@ const HallDruzhbaNarodiv = () => {
        seat="29"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1742"
        cx="45.599998"
@@ -9934,6 +13048,9 @@ const HallDruzhbaNarodiv = () => {
        seat="30"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1743"
        cx="42.524994"
@@ -9943,6 +13060,9 @@ const HallDruzhbaNarodiv = () => {
        seat="31"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1744"
        cx="39.249996"
@@ -9952,6 +13072,9 @@ const HallDruzhbaNarodiv = () => {
        seat="32"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1745"
        cx="36.174992"
@@ -9961,6 +13084,9 @@ const HallDruzhbaNarodiv = () => {
        seat="33"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1746"
        cx="33.00016"
@@ -9970,6 +13096,9 @@ const HallDruzhbaNarodiv = () => {
        seat="34"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1747"
        cx="29.925165"
@@ -9979,6 +13108,9 @@ const HallDruzhbaNarodiv = () => {
        seat="35"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1748"
        cx="26.850157"
@@ -9988,6 +13120,9 @@ const HallDruzhbaNarodiv = () => {
        seat="36"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1749"
        cx="23.575159"
@@ -9997,6 +13132,9 @@ const HallDruzhbaNarodiv = () => {
        seat="37"
        row="11"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1750"
        cx="20.500154"
@@ -10008,7 +13146,8 @@ const HallDruzhbaNarodiv = () => {
        floor="balcony" /></g><g
        groupmode="layer"
        id="layer3"
-       label="Label"><text
+       label="Label"
+       style={{display: 'inline',pointerEvents: 'none'}}><text
          space="preserve"
          style={{ fontStyle:"normal", fontVariant:"normal", fontWeight:"bold", fontStretch:"normal", fontSize: "1.23472px", fontFamily:"Arial", display:"inline", fill:"#ffffff", fillOpacity:"1", strokeWidth:"0.264583" }}
          x="126.00986"
@@ -20968,6 +24107,6 @@ const HallDruzhbaNarodiv = () => {
   
         </div>
     );
-}
+});
 
 export default HallDruzhbaNarodiv;

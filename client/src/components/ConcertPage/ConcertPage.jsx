@@ -8,6 +8,8 @@ import { Context } from '../..';
 import { getAboutConcert } from '../../http/concertAPI';
 import HallFilarmoniya from '../HallFilarmoniya/HallFilarmoniya';
 import PriceForConcert from './PriceForConcert/PriceForConcert';
+import HallDramteatr from '../HallDramteatr/HallDramteatr';
+import HallDruzhbaNarodiv from '../HallDruzhbaNarodiv/HallDruzhbaNarodiv';
 
 const ConcertPage = observer(() => {
     const {user} = useContext(Context);
@@ -27,7 +29,9 @@ const ConcertPage = observer(() => {
             <AboutConcert/>
             <hr className='concert-line'/>
             <div style={{display:'flex', flexDirection:'row'}}>
-                <HallFilarmoniya/>
+                {user.aboutConcert.venue === 'Filarmoniya' ? <HallFilarmoniya /> : null}
+                {user.aboutConcert.venue === 'Dramteatr' ? <HallDramteatr /> : null}
+                {user.aboutConcert.venue ==='DruzhbaNarodiv' ? <HallDruzhbaNarodiv /> : null}
                 <PriceForConcert/>
             </div>
             

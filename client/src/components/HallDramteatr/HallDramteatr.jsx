@@ -1,9 +1,158 @@
-import React from 'react';
-import './hallDramteatr.css'
+import React, {useContext, useRef, useEffect} from 'react';
+import './hallDramteatr.css';
+import { observer } from 'mobx-react-lite';
+import { Context } from '../..';
+import { createTicket, getTickets, deleteTicket, getTicketId, getTicketPrice } from '../../http/ticketAPI';
+import { addToTickets } from '../../http/userAPI';
 
-const HallDramteatr = () => {
-    return (
-        <div>
+
+const HallDramteatr = observer(() => {
+  const {user} = useContext(Context);
+  // const [seat, setSeat] = useState('');
+  // const [row, setRow] = useState('');
+  // const [floor, setFloor] = useState('');
+  // const [color, setColor] = useState('');
+  // const [showTooltip, setShowTooltip] = useState(false);
+  // const [tooltipX, setTooltipX] = useState(0);
+  // const [tooltipY, setTooltipY] = useState(0);
+  const circleRef = useRef();
+  // const wrapperRef = useRef();
+  const id = user.aboutConcert._id;
+  
+  // Отримати заброньовані квитки
+  // додати поле booked та reserved "true" та позначити ці місця сірим та червоним кольором
+  useEffect(()=>{
+    const fetchTickets = async() =>{
+      const {tickets} = await getTickets(id);
+      tickets.map(({_id, concertId, row, seat, floor, booked}) => {
+        if (concertId === id){
+          Array.from(circleRef.current.children).map(circle => {
+            if (circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor && booked){
+              circle.setAttribute('booked', true);
+              circle.style.fill = '#a7a7a7';
+            } 
+            else if (!user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+              circle.setAttribute('reserved', true);
+              circle.style.fill = 'red';
+            } 
+            else if (user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+              circle.style.fill = '#59ff00';
+            }return null
+          });
+        } return null
+      });
+    };
+    fetchTickets();
+  }, []);
+
+
+  const choosePlace = async(target) => {
+    //Перевірка чи заброньований, чи зарезервований квиток
+    if (!target.getAttribute('booked') && !target.getAttribute('reserved')){
+      //Формування квитка без ціни та ID 
+      const ticket = {
+          concertId: id,
+          row: target.getAttribute('row'),
+          seat: target.getAttribute('seat'),
+          floor: target.getAttribute('floor'),
+      };
+
+      const ticketId = await getTicketId(ticket);
+      const concertPrices = user.aboutConcert.price;
+      if(!ticketId.message) {
+        ticket._id = ticketId;
+        //Перевірка чи є даний квиток в сховищі
+        if (user.includesTicketToBook(ticket) || user.includesTicketId(ticket._id)){
+          ticket.price = await getTicketPrice(ticket._id);
+          switch(ticket.price){
+            case concertPrices[7] : target.style.fill = 'rgb(156, 17, 66)'; //червоний
+              break;
+            case concertPrices[6] : target.style.fill = 'rgb(207, 89, 207)'; //рожевий
+              break;
+            case concertPrices[5] : target.style.fill = 'rgb(83, 172, 77)'; //зелений
+              break;
+            case concertPrices[4] : target.style.fill = 'rgb(252, 178, 3)'; //помаранчевий 
+              break;
+            case concertPrices[3] : target.style.fill = 'rgb(0, 128, 128)'; //темнозелений
+              break;
+            case concertPrices[2] : target.style.fill = 'rgb(250, 42, 127)'; //кораловий
+              break;
+            case concertPrices[1] : target.style.fill = 'rgb(128, 102, 0)'; //коричневий
+              break;
+            case concertPrices[0] : target.style.fill = 'rgb(40, 21, 189)'; //синій
+              break;      
+          }
+          
+          //Видалити квиток з бази даних та оновити масив квитків у користувача
+          const {tickets} = await deleteTicket(ticket._id);
+          user.userTickets = tickets;
+          user.deleteTicket(ticket);
+        }
+      }
+      else {
+          //Формування ціни
+          let price;
+          switch(target.style.fill){
+            case 'rgb(156, 17, 66)': price = concertPrices[7]; //червоний
+              break;
+            case 'rgb(207, 89, 207)': price = concertPrices[6]; //рожевий
+              break;
+            case 'rgb(83, 172, 77)': price = concertPrices[5]; //зелений
+              break;
+            case 'rgb(252, 178, 3)': price = concertPrices[4]; //помаранчевий 
+              break;
+            case 'rgb(0, 128, 128)': price = concertPrices[3]; //темнозелений
+              break;
+            case 'rgb(250, 42, 127)': price = concertPrices[2]; //кораловий
+              break;
+            case 'rgb(128, 102, 0)': price = concertPrices[1]; //коричневий
+              break;
+            case 'rgb(40, 21, 189)': price = concertPrices[0]; //синій
+              break;      
+          }
+          ticket.price = price;
+          //Змінити колір місця (обраного квитка) на зелений
+          target.style.fill = '#59ff00';
+          //Створити квиток в базі даних
+          const data = await createTicket(ticket);
+          //Додати в масив квитків користувача
+          const {tickets} = await addToTickets(data.newTicket._id);
+          //Додати квиток до сховища
+          ticket._id = data.newTicket._id;
+          user.userTickets = tickets;
+          user.ticketsToBook = [...user.ticketsToBook, ticket];
+      };
+      console.table(ticket);
+      console.log(user.ticketsToBook, user.userTickets);
+      return;
+    } else return;   
+  };
+
+  // При наведенні курсора на місце (квиток) змінюєься розмір і додається кордон жовтого кольору
+  const enterCircle = (event) =>{
+    // const x = event.pageX - 68//- event.target.offsetLeft;
+    // const y = event.pageY - wrapperRef.current.offsetTop - 90//- event.target.offsetTop;
+    // setTooltipX(x);
+    // setTooltipY(y);
+    // setSeat(event.target.getAttribute("seat"))
+    // setRow(event.target.getAttribute("row"))
+    // setFloor(event.target.getAttribute("floor"))
+    // setColor(event.target.style.fill)
+    event.target.setAttribute('r', '2')
+    event.target.style.stroke = 'yellow'
+    event.target.style.strokeWidth = '0.5px'
+    //setShowTooltip(true)
+  }
+  // При прибирання курсора з місця (квитка) розмір повертається до стандартного та прибирається кордон
+  const leaveCircle = (event) =>{
+    event.target.setAttribute('r', '1.25')
+    event.target.style.stroke = 'none'
+    event.target.style.strokeWidth = '0'
+    //setShowTooltip(false)
+  }
+  // {showTooltip && <Tooltip seat={seat} row={row} floor={floor} color={color} x={tooltipX} y={tooltipY} />}
+  return (
+        <div className='wrapper-svg-dramteatr'>
             <svg
    width="210mm"
    height="297mm"
@@ -785,10 +934,14 @@ const HallDramteatr = () => {
        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAA3NCSVQICAjb4U/gAAAACXBIWXMA&#10;AA5oAAAOaAH5RyxrAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAwBQTFRF&#10;////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&#10;AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACyO34QAAAP90Uk5TAAECAwQFBgcICQoLDA0ODxAR&#10;EhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElK&#10;S0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKD&#10;hIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8&#10;vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T1&#10;9vf4+fr7/P3+6wjZNQAAGIlJREFUGBntwQu4lWPeP/Dv2nu3szsnJRHJoeQQEhrUOOUYmTSMmESx&#10;csxhot5xzKgZoXEuldOgMg4RIY0QckqKMuVQU+pBh13t2nd777W+/3n/1/Ve1/sO1lr3cz/3eu77&#10;2b/PB0i4sk6nX/fInPlL12yu27xm6fw3J/2hz15lEPVDu/RMxZ+qnjGkLUTSdRnxQZa/JPvedZ0g&#10;EqvkyDuWMp8v/9wjBZFEp37Ownx2IkTiHPYWCze7G0Si7PUMtWSf6giRGG3uq6GubeN2gEiE0v/a&#10;zDA2Di+B8F/zmQzrxaYQvtvrS4b3eUcIvx2/gSbW/hrCZ1fW0UxNGsJb5RNp7v4yCD+1eodRmN0C&#10;wkflbzMas8ogPDSRUbkHwj/DGJ0hEL45oY7RqekJ4ZfOlYzSjx0gfNJyGaO1sAmEP8reYNSeT0F4&#10;42ZGbxiEL9pWMXrrWkB44kHa8GcIP+xdSxuq20N44Rna8QiEDw6lJZn9ITwwh7a8AuG+k2nP0RCu&#10;Sy2kPR9BuO4w2nQAhONG06YbIRy3hDZ9AuG2TrSrPYTTrqddl0E4bR7tmgXhsnZZ2lXTAsJhQ2nb&#10;ORAOe422TYVwV4NttG09hLv2pn1tIZzVh/b9GsJZ19C+NISzxtO+cRDOeo32TYdw1vu0700IZy2i&#10;fR9BOOtb2rcEwllrad8qCGdV0b61EM76kfathHDWN7RvMYSzFtK+DyGc9S7tmw3hrJm073kIZz1A&#10;++6EcNaVtG8IhLNOon1HQThrD9rXGsJZpVtp2w8QDptO2x6HcNgg2tYPwmE71NGu6sYQLptDu2ZA&#10;OG0Y7RoM4bQOtCqzI4TbFtCmdyEcdxNtGg7huK60qROE696nPW9COO8oWpPtDuG+l2jLVAgP7Juh&#10;HTV7QPhgMu24B8IL7atpw6bWEH74C234I4QnWq5n9FY3gvDFVYzeIAhvpJ5h1CZBeKTRfEZrbjmE&#10;T9qvYZRWtIHwy+GK0ak6EMI35zEy2X4Q/hnDqNwI4aGSFxmNaSkIHzV+nlGYWgHhp9RtNJa9AcJf&#10;Z22lmaozIHzWbRVNLO8K4be28xjeO60hfNfwcYY1sRwiAS5czTBW/R4iGRr9cRN1VV5fAZEYre+t&#10;oY5td7WCSJQ9prJg2Sc7QCRO9zdZmFkHQyTSnte8nWFudXOu2h0iuVoPmr6Vv2TLcwNbQSRdo76P&#10;fMefWjmxTwVEPdH8sIGjp7zy9qfLVi379O1Xnv7Ted2bQQghhBBCCCGEEEIIIYQQQgghhBBCCCGE&#10;EEII4ZPy3X915hVjHn9j8Q8rFs19ZcqdF/ZoAVFftL3oZcWfWP3i0A4Qidf5uvez/CWLxx4MkWDt&#10;Rn/JPN4/txwimZrfvpUF+OHmJhDJUz5sLQsUpMsgkiU14FtqWHIiRJIc+Sk13dsQIjGG1lLbZ10g&#10;kqHsfoax9XSIJGj5BsOp+Q2E/zovY1i1/SF8d2Ilw6s7G8JvJ9XRRN0ACJ/ts5FmMgMh/LX9MprK&#10;nAHhq7LZNPdjGwhPPcAoPAfhp0sYjQEQPupZy2is3wnCPyULGZUZEP4ZyOicD+Gb7VYwOpUtITxz&#10;LaM0AsIvLdYzSqvLIbzyZ0ZrIIRP2lczWgshfDKWUTsewiNfM2qvQvhjf0ZvXwhv3MDo3QjhjY8Z&#10;vbcgfNGeFmxrBOGJS2nDCRCemEUb/gLhh8Y1tGE+hB8604psKwgvHEM7ToLwwrm04wIILwynHddD&#10;eGEc7bgLwgvTaMeTEF6YSztmQXjhG9rxGYQXqmjHdxBeULQjgPCCoh0BhBcU7QggvKBoRwDhBUU7&#10;AggvKNoRQHhB0Y4AwguKdgQQXlC0I4DwgqIdAYQXFO0IILygaEcA4QVFOwIILyjaEUB4QdGOAMIL&#10;inYEEF5QtCOA8IKiHQGEFxTtCCC8oGhHAOEFRTsCCC8o2hFAeEHRjgDCC4p2BBBeULQjgPCCoh0B&#10;hBcU7QggvKBoRwDhBUU7AggvKNoRQHhB0Y4AwguKdgQQXlC0I4DwgqIdAYQXFO0IILygaEcA4QVF&#10;OwIILyjaEUB4QdGOAMINzXdBLop2BBAOqPjtcyqNXBTtCCDi1uCUv20mmUYuinYEELEqOXrCOv5/&#10;aeSiaEcAEaNu41bzf6SRi6IdAURcSs+cy/8ljVwU7Qgg4tH8muX8P9LIRdGOACIOe96zmf8hjVwU&#10;7Qggiu/X0zP8iTRyUbQjgCiysoGf8uekkYuiHQFEcZ35T/68NHJRtCOAKKajP+QvSSMXRTsCiOI5&#10;6FX+sjRyUbQjgCiWjk9lmUMauSjaEUAUx4731TCnNHJRtCOAKIbtbt7MPNLIRdGOAKIIev6TeaWR&#10;i6IdAYR1zR/KMr80clG0I4Cw7fRVLEQauSjaEUDYteM0FiaNXBTtCCCsOn89C5RGLop2BBAWdZzF&#10;gqWRi6IdAYQ9g7ewcGnkomhHAGFLo8epI41cFO0IICzp/Dm1pJGLoh0BhB3nbKaeNHJRtCOAsKHh&#10;g9SVRi6KdgQQFnT8hNrSyEXRjqoxkRl1Wb8jdk9BAH03UF8auSj6YfWDvRugnisdyzDSyEXRGxvu&#10;2B71WcXzDCWNXBQ9suH6CtRb289lOGnkouiVVUegntp1MUNKIxdFv2w7H/XSAd8xrDRyUfTN2BLU&#10;P0dXMrQ0clH0zjjUO2dtY3hp5KLon8GoZ4ZlaSCNXBT9U9MT9UlqLI2kkYuih75vhnrkrzSTRi6K&#10;PhqF+mM0DaWRi6KPqtqivriBptLIRdFLD6CeuIbG0shF0UuqKeqFS2gujVwU/fRb1AeDsjSXRi6K&#10;fnoa9cDZGUYgjVwU/bSxHInXt5ZRSCMXRU8diqTrvY2RSCMXRU/1RcLts5HRuBi5KHpqKJKt5VJG&#10;Ynm6IXJR9NStSLTS1xmFZRc0QG6KnhqPRLubEVg8oBT5KHrqTiTZIJpb1r8E+Sl6ajgSrMc2mtp4&#10;bTkKoeipgUiuXdbQUObhNiiMoqcOR2JVfExDcw5EoRT9tK4UifU0zQT9UThFP01BYl1JM9N2gAZF&#10;P52FpOpSTRNrz4IWRS8tKEFCNZhPEy+2hR5FL/VGUt1OA5XnQ5eij15DUh2RYXgL94Q2RQ9lDkBC&#10;Nf2G4T3ZCPoUPfQIkmoSQ6u9AmEo+idoh4Tqy9DWHIlQFL1T1Q0JteMPDOvdnRCOom9qT0JSzWBY&#10;zzZESIq+uQBJNZBhPViCsBT9snUwkqpZwJBuQniKXvmsCxJrLMOpuxgGFH1yz3ZIrE41DKX6DJhQ&#10;9Ebd872QYK8ylOrjYETRE9/dvDOSrA9DqTkFZhTtyASR+dc7T9w66KgyJFrDrxhGXT8YUrQjgNAx&#10;gmFkBsCUoh0BhIadqxhCdjCMKdoRQGh4kmFcDnOKdgQQhTuCYYxFBBTtCCAK9xZDeLkEEVC0I4Ao&#10;2JEM4fNmiIKiHQFEwWZS39qOiISiHQFEobpRX00vREPRjgCiUM9R3xBERNGOAKJA+2ap7VFERdGO&#10;AKJAT1LbsiaIiqIdAURh9qyjrpruiIyiHQFEYR6mtusQHUU7AoiCtK+hrtkliI6iHQFEQe6hrrXt&#10;ECFFOwKIQjTbQl39ECVFOwKIQlxEXS8hUop2BBCF+ICatuyGSCnaEUAUYD/qGo5oKdqx8Xwrzjv1&#10;8L2aIznupqZFDRAtRf98O/WaHikkQfla6skeiYgp+ulfY/aF//pT00RETdFb806A716jnk07IGqK&#10;Hnu7J7y2a4Z6bkHkFL02uQk8dhP1rGuGyCn6bdmh8FZqOfVch+gpeq52KHx1HPWsaYToKXpvBDz1&#10;APVcDgsU/Xc7/PQvallRDgsUE+AG+Kgr9aRhg2ICZE+Hh/6LWtY3gg2KSbCpC/zzPrX8BVYoJsKX&#10;5fBNmwx11O0GK7YwGUbCN+dTy7Ow41smw5b28Myz1NITdrzLhHgGfinfTB2fwpJpTIru8EpvarkA&#10;loxjUsyEV+6hjuqmsGQ4E6MHfPINdTwDWwYwMWbBI+2o5Tew5WgmR0/4oy91bNwOtnRicsyBP26n&#10;jkdhTZMsk+MYeOMN6ugNe95ncsyFL1KV1PB9KewZwQTpDU90po7xsKgLE2QePPF76ugHm5YxQU6B&#10;H+6jhkxL2DSWCfIx/PAhNXwAq3oySU6HD8q3UcNtsKp0LRNkQQoeOJQ6esGuR5kk/eCBy6ihqhx2&#10;9WKSLCqB+yZQw8uw7WUmydlw3+vUcB1s2y/DBFlSAuctpYbesG4yk+RcuC6lqKENrNtlKxNkaSkc&#10;144aVqMIRjNJzofjfkUNL6MImq9lgnxdBredQw1/QjEMY5IMgdtGUsOZKIbSmUyQFeVw2gRq2BNF&#10;0fxLJshQOO11Fq46heLYewOTY2VDuGwpC7cMxdK7jslxORyWUizcP1A0VzI5VlfAXTtRw2MonolM&#10;jqvhrv2p4TYUT/kbTIzvG8FZh1PDxSiiBhOYGMPhrGOo4WQU1eW1TIgfm8BVfahhfxTXseuZECPh&#10;qrOooRWKbM/FTIb1zeCoQdRQjmJr9jKT4SY46jIWLoPiKxkaMAkqW8BNw1m4zYhD4xs3MwFGwU23&#10;sHA/IB5t7quh9za1gpPuYOFWIC57TqP3RsNJ97NwSxCfQ+5dQb9VtYaLHmXh5iNWB938KX02Fi6a&#10;xsLNRdx2u/yNGvpqa1s4aCoL9x4cUNK2W5+Lb534yoLVQXFV09Q4OGgiC7cQ9dkFNFXdDu65m4X7&#10;FvVZ2Vc0dR/ccysLtxb12u9palt7OOcPLJxCvVb6JU2Nh3PS1NAA9drvaKqmA1wzgBq2R71W8gVN&#10;TYJrTqOGXVG/9aep2j3gmKOpYV/Ub6nPaOoxOOYQajgM9VxfmqrrBLfsTQ3Hob77hKaeglt2oob+&#10;qO9OpalMFzilCTWMRL33AU1Ng1NSWRbuMdR7J9BU9gA4ZRMLNw/iXZp6Dk75joXbAHEsjR0El3xI&#10;DW0g3qKpl+CSJ6jhKIheNNYdDvkjNQyBwBs0NRMO6U8NYyHwKxrrAXd0pYaXIIBXaWoW3FGRZeGW&#10;QgCH0lhPuGMFC1dbAQG8RFNz4I7XqeE4COBgGjsGzriXGkZD/NvzNDUXzricGj6E+LcDsjTVG67o&#10;TQ11LSD+bRpNzYMrdqOOvhD/tm+Gpk6GI1JbqeEeiP/2FE19DFd8Rg1fQPy3TnU0dToc8Qx17IQk&#10;2vmgbt0P63HEUb2OPvb4E048+dTTWiOPx2lqQQpuuIk6BiCJ3uZ/GI889qylqX5wQy/qmIwEapfl&#10;f6jZHXlMoqlFJXBC+VZqWFOK5LmCPzEZeXSooamz4IbXqeNEJM87/Im6vZDHeJpaUgInXE8dTyFx&#10;ds7yp55AHu230dS5cEJ36tjaFElzJX9GpjPyuI+mlpbCBaWV1DEISTOXP2cK8mhXTVPnwwkvUMeb&#10;SJids/w52f2Qxzia+roMLriCOrK7Ilmu5c97Fnm03UJTg+GC/ahlJBKl5Cv+vOyByOMOmlpeDhcE&#10;1PElEuUU/pIXkUfrKpoaChc8TS2HIkle5S/qjjxG09TKhnDAYGoZjwTZO8tfNBN5bL+Jpi6HAzpS&#10;i2qH5Pgrc+iBPG6lqdUVcMByarkTidFkI3OYhTxaVNLUVXDAg9RS1QpJcQlz6ok8bqSp7xshfkdQ&#10;zygkRGoxc5qDPJqto6nhcMBX1LKhGZLhd8zjWOQxgqZ+bIL43UQ9I5AIZcuYx7vIo8mPNDUS8etI&#10;PT80QhJcxLxORB5/oKn1zRC/d6jnSiTAdquY14fIo1FAUzcifkOoZ1U5/HcNC3Aq8riKpipbIHYt&#10;qqnnaniv2VoWYH4KuW33HU2NQvymUc+mdvDdLSzIGcjjMpra1AqxO5WapsBzO25iQRamkFvDlTQ1&#10;GrEr+56ajoPfprBAv0UeaZqqao3YjaOmL8vhs5NZqMUlyK3Bcpq6A7E7mLpGwmONl7NgA5DHhTS1&#10;tS1i9zk1be0Af93Fwi0tRW5lX9HUOMTuWuqaDm91q6OG85HHQJqqboe4Na+krlPhqdL51PF1GXIr&#10;/SdN3YfY3UZdy5vDT9dSzxDkcQ5NbWuPuO1QRV3Pwkv7baWeFeXIreQLmhqP2N1FbVfCQ40XU9cl&#10;yOO3NFXTAXFrp6hrW3f451Fqm4o8UgtpahJi9yC1fdsCvhlIfd2Qzxk0VbsH4tahltqeh2f2qaK2&#10;6cgrNZ+mHkPsHqW+YfBKxSJqyx6E/PrQVF0nxK1ThtpqDoNPJlDfcyjEhzT1FGI3jfqWt4Q/hlBf&#10;tisKcSJNZbogbl0ZwlvbwRcn11Hf31GY92hqGmL3EkN4vhR+OHgz9WX3Q2GOo6nsAYjb4QzjYXhh&#10;tzUMYSoK9TZNPYfYzWAYt8EDLRczhEwXFKoXTWUPQtw6VjOMy+G8hm8xjMko3Gyaegmxu4FhZM+G&#10;40qmMIz1rVG4I2isO+LWcCnD2HY8nFbyGEO5BDpeo6mZiF1vhrK5OxxW9hRD+aQEOg6jsR6I3TSG&#10;UtkLzmrwd4aSPRx6ZtDULMRu500MpbovHFU+neFMhKZuNHYUYnc1w6kbDCdt9wrDWb8DdL1AU3MQ&#10;u7LPGNIIOKjidYaUhrauWZo6BrE7IsuQ7k7BNTt9wJA+LoG+Z2hqLuI3mWH9rQHccvBKhlTXHSHs&#10;m6Gp3ojdDusY1sxGcEn/LQxrFEJ5mqbmIX4XMbQFe8MZqZuyDOujMoTSOUNTJyN2qTcY2uZz4IiK&#10;qQxta2eE9ARNfYz47biG4T1cARfs+jHDuxRh7VlLU6cjfsdmGN6ifRC/AZUM71WEN5mmFqQQv1to&#10;oGogYtbiaRpY1w7h7V5DU79B/ErfpIlHGyNOR/+LJs6EiQk09Q84oN0PNLH4MMSm/I4sTTwOI7tu&#10;o6HsHnDACVmayE7YHvE4YAGNfN0cZu6nqdvhgttp5scLUyi+5uNqaWTzfjC0czUNrS6DA8reoaH3&#10;DkSRpQZ9TzPZfjD2V5o6DS7YZS0N1f21GYrpkHk0dSvMtd1KQ0/CCadkaWrNOSiaHR7O0NT0FCIw&#10;loa+gBvuoLkP+qAomo5YT2OLmyEKratoprYcTih7jRFY0L8EtrW4cT3NbdgL0RhDQwfADY0/YBSW&#10;nFcGm7YfVckIZE5CRFptopkBcESrJYzE10PKYUvrMZsZiesQmVE0Mwau2HUlo7Hyiqaw4ZCHtjAa&#10;DyE6LStpZCKc0WUdI7LlyRNKEa0Wly1gVKaWIEI30cj9cEePLYzM6jv2R3R6PVHNyLxWjig1W08T&#10;d8EhJ9cyQp9etSOisN/IpYzQ+40RrZE0MRouOS/LKNW9PGg3GCk//p5vGalFLRGxJj/SwM1wytWM&#10;2tcP/64twmk98O+bGLFvdkLkhtPA9XDLGFqw+L7fbA8tJftdOH5BhpFbswei1+h7hncaHDOZVmTm&#10;T76u7z7lKMAu/f48ZzOt2HAAbLiK4bWGY0r/Rnvqls2486JeO6Xwc1oc2HfYuBcWVNKaH7vBiorV&#10;DGspnJO6m7ZlN3/35UezX3j8/jEjr7lhzL2Tp85488MvKmnbqn1gyeUM61E4aAQT6asOsKXhSoZ0&#10;MVx0YR2TZ1Fb2DOU4WQ7wkmnVzNp5m0Pi8qXM5QZcFTPSibL7CawajBD6Q1XdV3DJHmhIewq+5oh&#10;LEnBWR2XMTkmlcG28xjCUDiszXwmRN2VsC/1HrUFjeGyZv9gIqw7DsVwcIa6+sBtDR9hAny+B4rj&#10;AWqaCOf9voq+m94URdJiGbV82xTu67yQfhuVQtF02UQNmZ7wQcUEemxLfxRTnywLdw088btN9NWS&#10;riiuYSzYlfDGXp/STw80QrENybAg2YvhkYYP0EPfn4oYnLmNBcgMgl/6b6RvZrRBLI5awbyC0+Cb&#10;jh/TK1svQVyaP8E8JrWEf8r/tI3++KQzYnTmcubw1THwU+fZ9ETt6AaIVfmlq/kL1oyqgLfOWUMf&#10;vLM/Yldx6Xv8qeopJ5fCZ83vzdB1PwxMwQkdrn9nC/+3uRc1h/cO/oBOyzzQEu4o3f+C0eOfmT1r&#10;0s0XHt+5MRKhJL2e7vrwEAjb2jxGR61Pl0AUQc/P6aBt97eGKI4GQ76iY2of3g2ieEoHfE6HZB7f&#10;A6K4Umd8TEdkp3SGiMEJb9MFz+8PEZOjXmXMaqZ0g4jRIc9lGZ/glnYQMdv3iWrGY96AcggHNB/y&#10;TpbFph47BMIZu9/4FYvp65GtIdzyq4c2sDhW3XUohIManvliDW37/v6jUhCuan3FR7Ro/aTjSyHc&#10;tvO5k5fThiX3nlIO4YWOg59awyitfnzgzhBe2efSZ9cxChtfvKILhI9KDrrm5TU0UPX+Q+nDyiB8&#10;1qz7ebc9s6iamlbOuK3/3iUQCVGy+0nDHvzHauZV+fnMCTcM+nUriCRq1rXnKWcPufqmsROenvHW&#10;/GXBlkzVDyuWzJ/7+vSnJ99384UndGkKkcf/A7UZ7onu8CmKAAAAAElFTkSuQmCC&#10;"
        id="image1639"
        x="149.07837"
-       y="97.79702" /></g><g
+       y="97.79702" /></g>
+       <g ref={circleRef}
      label="Circle"
      groupmode="layer"
      id="layer1"><circle
+     onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle7"
        cx="155.88388"
@@ -798,6 +951,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle8"
        cx="152.60907"
@@ -807,6 +963,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle9"
        cx="149.43413"
@@ -816,6 +975,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle10"
        cx="146.35909"
@@ -825,6 +987,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle13"
        cx="125.39272"
@@ -834,6 +999,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle14"
        cx="122.31762"
@@ -843,6 +1011,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle15"
        cx="119.24259"
@@ -852,6 +1023,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle16"
        cx="116.06744"
@@ -861,6 +1035,9 @@ const HallDramteatr = () => {
        seat="8"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle17"
        cx="112.89237"
@@ -870,6 +1047,9 @@ const HallDramteatr = () => {
        seat="9"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle18"
        cx="109.81734"
@@ -879,6 +1059,9 @@ const HallDramteatr = () => {
        seat="10"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle19"
        cx="106.74228"
@@ -888,6 +1071,9 @@ const HallDramteatr = () => {
        seat="11"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle20"
        cx="103.66718"
@@ -897,6 +1083,9 @@ const HallDramteatr = () => {
        seat="12"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle21"
        cx="100.69212"
@@ -906,6 +1095,9 @@ const HallDramteatr = () => {
        seat="13"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle22"
        cx="97.517021"
@@ -915,6 +1107,9 @@ const HallDramteatr = () => {
        seat="14"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle23"
        cx="94.541954"
@@ -924,6 +1119,9 @@ const HallDramteatr = () => {
        seat="15"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle24"
        cx="91.466957"
@@ -933,6 +1131,9 @@ const HallDramteatr = () => {
        seat="16"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle35"
        cx="71.987762"
@@ -942,6 +1143,9 @@ const HallDramteatr = () => {
        seat="17"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle36"
        cx="68.812683"
@@ -951,6 +1155,9 @@ const HallDramteatr = () => {
        seat="18"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle37"
        cx="65.73761"
@@ -960,6 +1167,9 @@ const HallDramteatr = () => {
        seat="19"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle38"
        cx="62.762573"
@@ -969,6 +1179,9 @@ const HallDramteatr = () => {
        seat="20"
        row="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle41"
        cx="165.509"
@@ -978,6 +1191,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle42"
        cx="162.23419"
@@ -987,6 +1203,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle43"
        cx="159.05925"
@@ -996,6 +1215,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle44"
        cx="155.88408"
@@ -1005,6 +1227,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle47"
        cx="152.68008"
@@ -1014,6 +1239,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle48"
        cx="149.50508"
@@ -1023,6 +1251,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle49"
        cx="146.35909"
@@ -1032,6 +1263,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle51"
        cx="127.07967"
@@ -1041,6 +1275,9 @@ const HallDramteatr = () => {
        seat="8"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle52"
        cx="123.90459"
@@ -1050,6 +1287,9 @@ const HallDramteatr = () => {
        seat="9"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle53"
        cx="120.82957"
@@ -1059,6 +1299,9 @@ const HallDramteatr = () => {
        seat="10"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle54"
        cx="117.75452"
@@ -1068,6 +1311,9 @@ const HallDramteatr = () => {
        seat="11"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle55"
        cx="114.67943"
@@ -1077,6 +1323,9 @@ const HallDramteatr = () => {
        seat="12"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle56"
        cx="111.70436"
@@ -1086,6 +1335,9 @@ const HallDramteatr = () => {
        seat="13"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle57"
        cx="108.52927"
@@ -1095,6 +1347,9 @@ const HallDramteatr = () => {
        seat="14"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle58"
        cx="105.55419"
@@ -1104,6 +1359,9 @@ const HallDramteatr = () => {
        seat="15"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle59"
        cx="102.47919"
@@ -1113,6 +1371,9 @@ const HallDramteatr = () => {
        seat="16"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle60"
        cx="99.40419"
@@ -1122,6 +1383,9 @@ const HallDramteatr = () => {
        seat="17"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle61"
        cx="96.229111"
@@ -1131,6 +1395,9 @@ const HallDramteatr = () => {
        seat="18"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle62"
        cx="93.154037"
@@ -1140,6 +1407,9 @@ const HallDramteatr = () => {
        seat="19"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle63"
        cx="90.179001"
@@ -1149,6 +1419,9 @@ const HallDramteatr = () => {
        seat="20"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle75"
        cx="71.958359"
@@ -1158,6 +1431,9 @@ const HallDramteatr = () => {
        seat="21"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle76"
        cx="68.883347"
@@ -1167,6 +1443,9 @@ const HallDramteatr = () => {
        seat="22"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle77"
        cx="65.708344"
@@ -1176,6 +1455,9 @@ const HallDramteatr = () => {
        seat="23"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle78"
        cx="62.433334"
@@ -1185,6 +1467,9 @@ const HallDramteatr = () => {
        seat="24"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle79"
        cx="59.358337"
@@ -1194,6 +1479,9 @@ const HallDramteatr = () => {
        seat="25"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle80"
        cx="56.183304"
@@ -1203,6 +1491,9 @@ const HallDramteatr = () => {
        seat="26"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle81"
        cx="53.008324"
@@ -1212,6 +1503,9 @@ const HallDramteatr = () => {
        seat="27"
        row="2"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle93"
        cx="159.15909"
@@ -1221,6 +1515,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle94"
        cx="155.88428"
@@ -1230,6 +1527,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle95"
        cx="152.70934"
@@ -1239,6 +1539,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle96"
        cx="149.53416"
@@ -1248,6 +1551,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle97"
        cx="146.35909"
@@ -1257,6 +1563,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle101"
        cx="129.19676"
@@ -1266,6 +1575,9 @@ const HallDramteatr = () => {
        seat="6"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle102"
        cx="126.12174"
@@ -1275,6 +1587,9 @@ const HallDramteatr = () => {
        seat="7"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle103"
        cx="122.9466"
@@ -1284,6 +1599,9 @@ const HallDramteatr = () => {
        seat="8"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle104"
        cx="119.77153"
@@ -1293,6 +1611,9 @@ const HallDramteatr = () => {
        seat="9"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+       onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle105"
        cx="116.6965"
@@ -1302,6 +1623,9 @@ const HallDramteatr = () => {
        seat="10"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle106"
        cx="113.62144"
@@ -1311,6 +1635,9 @@ const HallDramteatr = () => {
        seat="11"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle107"
        cx="110.54636"
@@ -1320,6 +1647,9 @@ const HallDramteatr = () => {
        seat="12"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle108"
        cx="107.57129"
@@ -1329,6 +1659,9 @@ const HallDramteatr = () => {
        seat="13"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle109"
        cx="104.3962"
@@ -1338,6 +1671,9 @@ const HallDramteatr = () => {
        seat="14"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle110"
        cx="101.42113"
@@ -1347,6 +1683,9 @@ const HallDramteatr = () => {
        seat="15"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle111"
        cx="98.34613"
@@ -1356,6 +1695,9 @@ const HallDramteatr = () => {
        seat="16"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle112"
        cx="95.271118"
@@ -1365,6 +1707,9 @@ const HallDramteatr = () => {
        seat="17"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle113"
        cx="92.096039"
@@ -1374,6 +1719,9 @@ const HallDramteatr = () => {
        seat="18"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle114"
        cx="89.020966"
@@ -1383,6 +1731,9 @@ const HallDramteatr = () => {
        seat="19"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle127"
        cx="71.95842"
@@ -1392,6 +1743,9 @@ const HallDramteatr = () => {
        seat="20"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle128"
        cx="68.98336"
@@ -1401,6 +1755,9 @@ const HallDramteatr = () => {
        seat="21"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle129"
        cx="65.908348"
@@ -1410,6 +1767,9 @@ const HallDramteatr = () => {
        seat="22"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle130"
        cx="62.733349"
@@ -1419,6 +1779,9 @@ const HallDramteatr = () => {
        seat="23"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle131"
        cx="59.45834"
@@ -1428,6 +1791,9 @@ const HallDramteatr = () => {
        seat="24"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle135"
        cx="159.15909"
@@ -1437,6 +1803,9 @@ const HallDramteatr = () => {
        row="4"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle136"
        cx="155.88428"
@@ -1446,6 +1815,9 @@ const HallDramteatr = () => {
        seat="2"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle137"
        cx="152.70934"
@@ -1455,6 +1827,9 @@ const HallDramteatr = () => {
        seat="3"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle138"
        cx="149.53416"
@@ -1464,6 +1839,9 @@ const HallDramteatr = () => {
        seat="4"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle139"
        cx="146.35909"
@@ -1473,6 +1851,9 @@ const HallDramteatr = () => {
        seat="5"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle143"
        cx="130.78424"
@@ -1482,6 +1863,9 @@ const HallDramteatr = () => {
        seat="6"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle144"
        cx="127.70924"
@@ -1491,6 +1875,9 @@ const HallDramteatr = () => {
        seat="7"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle145"
        cx="124.5341"
@@ -1500,6 +1887,9 @@ const HallDramteatr = () => {
        seat="8"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle177"
        cx="121.35904"
@@ -1509,6 +1899,9 @@ const HallDramteatr = () => {
        seat="9"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle178"
        cx="118.284"
@@ -1518,6 +1911,9 @@ const HallDramteatr = () => {
        seat="10"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle179"
        cx="115.20895"
@@ -1527,6 +1923,9 @@ const HallDramteatr = () => {
        seat="11"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle180"
        cx="112.13385"
@@ -1536,6 +1935,9 @@ const HallDramteatr = () => {
        seat="12"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle181"
        cx="109.15879"
@@ -1545,6 +1947,9 @@ const HallDramteatr = () => {
        seat="13"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle182"
        cx="105.9837"
@@ -1554,6 +1959,9 @@ const HallDramteatr = () => {
        seat="14"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle183"
        cx="103.00864"
@@ -1563,6 +1971,9 @@ const HallDramteatr = () => {
        seat="15"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle184"
        cx="99.933693"
@@ -1572,6 +1983,9 @@ const HallDramteatr = () => {
        seat="16"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle185"
        cx="96.85862"
@@ -1581,6 +1995,9 @@ const HallDramteatr = () => {
        seat="17"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle186"
        cx="93.68354"
@@ -1590,6 +2007,9 @@ const HallDramteatr = () => {
        seat="18"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle187"
        cx="90.608513"
@@ -1599,6 +2019,9 @@ const HallDramteatr = () => {
        seat="19"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle188"
        cx="87.63343"
@@ -1608,6 +2031,9 @@ const HallDramteatr = () => {
        seat="20"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle222"
        cx="71.958366"
@@ -1617,6 +2043,9 @@ const HallDramteatr = () => {
        seat="21"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle223"
        cx="68.883347"
@@ -1626,6 +2055,9 @@ const HallDramteatr = () => {
        seat="22"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle224"
        cx="65.708344"
@@ -1635,6 +2067,9 @@ const HallDramteatr = () => {
        seat="23"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle225"
        cx="62.433338"
@@ -1644,6 +2079,9 @@ const HallDramteatr = () => {
        seat="24"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle226"
        cx="59.358341"
@@ -1653,6 +2091,9 @@ const HallDramteatr = () => {
        seat="25"
        row="4"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle230"
        cx="159.15909"
@@ -1662,6 +2103,9 @@ const HallDramteatr = () => {
        row="5"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle231"
        cx="155.88428"
@@ -1671,6 +2115,9 @@ const HallDramteatr = () => {
        seat="2"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle232"
        cx="152.70934"
@@ -1680,6 +2127,9 @@ const HallDramteatr = () => {
        seat="3"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle233"
        cx="149.53416"
@@ -1689,6 +2139,9 @@ const HallDramteatr = () => {
        seat="4"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle234"
        cx="146.35909"
@@ -1698,6 +2151,9 @@ const HallDramteatr = () => {
        seat="5"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle238"
        cx="132.37172"
@@ -1707,6 +2163,9 @@ const HallDramteatr = () => {
        seat="6"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle239"
        cx="129.29672"
@@ -1716,6 +2175,9 @@ const HallDramteatr = () => {
        seat="7"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle240"
        cx="126.1216"
@@ -1725,6 +2187,9 @@ const HallDramteatr = () => {
        seat="8"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle241"
        cx="122.94653"
@@ -1734,6 +2199,9 @@ const HallDramteatr = () => {
        seat="9"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle242"
        cx="119.87151"
@@ -1743,6 +2211,9 @@ const HallDramteatr = () => {
        seat="10"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle243"
        cx="116.79644"
@@ -1752,6 +2223,9 @@ const HallDramteatr = () => {
        seat="11"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle244"
        cx="113.72136"
@@ -1761,6 +2235,9 @@ const HallDramteatr = () => {
        seat="12"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle245"
        cx="110.74629"
@@ -1770,6 +2247,9 @@ const HallDramteatr = () => {
        seat="13"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle246"
        cx="107.57119"
@@ -1779,6 +2259,9 @@ const HallDramteatr = () => {
        seat="14"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle247"
        cx="104.59612"
@@ -1788,6 +2271,9 @@ const HallDramteatr = () => {
        seat="15"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle248"
        cx="101.52113"
@@ -1797,6 +2283,9 @@ const HallDramteatr = () => {
        seat="16"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle249"
        cx="98.446121"
@@ -1806,6 +2295,9 @@ const HallDramteatr = () => {
        seat="17"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle250"
        cx="95.271042"
@@ -1815,6 +2307,9 @@ const HallDramteatr = () => {
        seat="18"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle251"
        cx="92.195969"
@@ -1824,6 +2319,9 @@ const HallDramteatr = () => {
        seat="19"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle252"
        cx="89.220932"
@@ -1833,6 +2331,9 @@ const HallDramteatr = () => {
        seat="20"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle253"
        cx="86.245872"
@@ -1842,6 +2343,9 @@ const HallDramteatr = () => {
        seat="21"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle268"
        cx="71.958382"
@@ -1851,6 +2355,9 @@ const HallDramteatr = () => {
        seat="22"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle269"
        cx="68.783379"
@@ -1860,6 +2367,9 @@ const HallDramteatr = () => {
        seat="23"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle270"
        cx="65.508369"
@@ -1869,6 +2379,9 @@ const HallDramteatr = () => {
        seat="24"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle271"
        cx="62.433372"
@@ -1878,6 +2391,9 @@ const HallDramteatr = () => {
        seat="25"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle272"
        cx="59.258339"
@@ -1887,6 +2403,9 @@ const HallDramteatr = () => {
        seat="26"
        row="5"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle276"
        cx="155.98413"
@@ -1896,6 +2415,9 @@ const HallDramteatr = () => {
        row="6"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle277"
        cx="152.70932"
@@ -1905,6 +2427,9 @@ const HallDramteatr = () => {
        seat="2"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle278"
        cx="149.53438"
@@ -1914,6 +2439,9 @@ const HallDramteatr = () => {
        seat="3"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle279"
        cx="146.35921"
@@ -1923,6 +2451,9 @@ const HallDramteatr = () => {
        seat="4"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle282"
        cx="133.85892"
@@ -1932,6 +2463,9 @@ const HallDramteatr = () => {
        seat="5"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle283"
        cx="130.78386"
@@ -1941,6 +2475,9 @@ const HallDramteatr = () => {
        seat="6"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle284"
        cx="127.70885"
@@ -1950,6 +2487,9 @@ const HallDramteatr = () => {
        seat="7"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle285"
        cx="124.53373"
@@ -1959,6 +2499,9 @@ const HallDramteatr = () => {
        seat="8"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle286"
        cx="121.35867"
@@ -1968,6 +2511,9 @@ const HallDramteatr = () => {
        seat="9"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle287"
        cx="118.28364"
@@ -1977,6 +2523,9 @@ const HallDramteatr = () => {
        seat="10"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle288"
        cx="115.20855"
@@ -1986,6 +2535,9 @@ const HallDramteatr = () => {
        seat="11"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle289"
        cx="112.13348"
@@ -1995,6 +2547,9 @@ const HallDramteatr = () => {
        seat="12"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle290"
        cx="109.15841"
@@ -2004,6 +2559,9 @@ const HallDramteatr = () => {
        seat="13"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle291"
        cx="105.98333"
@@ -2013,6 +2571,9 @@ const HallDramteatr = () => {
        seat="14"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle292"
        cx="103.00826"
@@ -2022,6 +2583,9 @@ const HallDramteatr = () => {
        seat="15"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle293"
        cx="99.933258"
@@ -2031,6 +2595,9 @@ const HallDramteatr = () => {
        seat="16"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle294"
        cx="96.858246"
@@ -2040,6 +2607,9 @@ const HallDramteatr = () => {
        seat="17"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle295"
        cx="93.683167"
@@ -2049,6 +2619,9 @@ const HallDramteatr = () => {
        seat="18"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle296"
        cx="90.608093"
@@ -2058,6 +2631,9 @@ const HallDramteatr = () => {
        seat="19"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle297"
        cx="87.633057"
@@ -2067,6 +2643,9 @@ const HallDramteatr = () => {
        seat="20"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle298"
        cx="84.657997"
@@ -2076,6 +2655,9 @@ const HallDramteatr = () => {
        seat="21"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle314"
        cx="71.958382"
@@ -2085,6 +2667,9 @@ const HallDramteatr = () => {
        seat="22"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle315"
        cx="68.783379"
@@ -2094,6 +2679,9 @@ const HallDramteatr = () => {
        seat="23"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle316"
        cx="65.508369"
@@ -2103,6 +2691,9 @@ const HallDramteatr = () => {
        seat="24"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle317"
        cx="62.433372"
@@ -2112,6 +2703,9 @@ const HallDramteatr = () => {
        seat="25"
        row="6"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle320"
        cx="155.98413"
@@ -2121,6 +2715,9 @@ const HallDramteatr = () => {
        row="7"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle321"
        cx="152.70932"
@@ -2130,6 +2727,9 @@ const HallDramteatr = () => {
        seat="2"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle322"
        cx="149.53438"
@@ -2139,6 +2739,9 @@ const HallDramteatr = () => {
        seat="3"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle323"
        cx="146.35921"
@@ -2148,6 +2751,9 @@ const HallDramteatr = () => {
        seat="4"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle326"
        cx="135.44678"
@@ -2157,6 +2763,9 @@ const HallDramteatr = () => {
        seat="5"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle327"
        cx="132.37172"
@@ -2166,6 +2775,9 @@ const HallDramteatr = () => {
        seat="6"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle328"
        cx="129.29672"
@@ -2175,6 +2787,9 @@ const HallDramteatr = () => {
        seat="7"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle329"
        cx="126.1216"
@@ -2184,6 +2799,9 @@ const HallDramteatr = () => {
        seat="8"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle330"
        cx="122.94653"
@@ -2193,6 +2811,9 @@ const HallDramteatr = () => {
        seat="9"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle331"
        cx="119.87151"
@@ -2202,6 +2823,9 @@ const HallDramteatr = () => {
        seat="10"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle332"
        cx="116.79644"
@@ -2211,6 +2835,9 @@ const HallDramteatr = () => {
        seat="11"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle333"
        cx="113.72136"
@@ -2220,6 +2847,9 @@ const HallDramteatr = () => {
        seat="12"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle334"
        cx="110.74629"
@@ -2229,6 +2859,9 @@ const HallDramteatr = () => {
        seat="13"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle335"
        cx="107.57119"
@@ -2238,6 +2871,9 @@ const HallDramteatr = () => {
        seat="14"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle336"
        cx="104.59612"
@@ -2247,6 +2883,9 @@ const HallDramteatr = () => {
        seat="15"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle337"
        cx="101.52113"
@@ -2256,6 +2895,9 @@ const HallDramteatr = () => {
        seat="16"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle338"
        cx="98.446121"
@@ -2265,6 +2907,9 @@ const HallDramteatr = () => {
        seat="17"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle339"
        cx="95.271042"
@@ -2274,6 +2919,9 @@ const HallDramteatr = () => {
        seat="18"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle340"
        cx="92.195969"
@@ -2283,6 +2931,9 @@ const HallDramteatr = () => {
        seat="19"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle341"
        cx="89.220932"
@@ -2292,6 +2943,9 @@ const HallDramteatr = () => {
        seat="20"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle342"
        cx="86.245872"
@@ -2301,6 +2955,9 @@ const HallDramteatr = () => {
        seat="21"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle343"
        cx="83.17086"
@@ -2310,6 +2967,9 @@ const HallDramteatr = () => {
        seat="22"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle360"
        cx="71.958382"
@@ -2319,6 +2979,9 @@ const HallDramteatr = () => {
        seat="23"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle361"
        cx="68.683372"
@@ -2328,6 +2991,9 @@ const HallDramteatr = () => {
        seat="24"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle362"
        cx="65.608376"
@@ -2337,6 +3003,9 @@ const HallDramteatr = () => {
        seat="25"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#9c1142", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle363"
        cx="62.433342"
@@ -2346,6 +3015,9 @@ const HallDramteatr = () => {
        seat="26"
        row="7"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle366"
        cx="155.98413"
@@ -2355,6 +3027,9 @@ const HallDramteatr = () => {
        row="8"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle367"
        cx="152.70932"
@@ -2364,6 +3039,9 @@ const HallDramteatr = () => {
        seat="2"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle368"
        cx="149.53438"
@@ -2373,6 +3051,9 @@ const HallDramteatr = () => {
        seat="3"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle369"
        cx="146.35921"
@@ -2382,6 +3063,9 @@ const HallDramteatr = () => {
        seat="4"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle372"
        cx="137.03424"
@@ -2391,6 +3075,9 @@ const HallDramteatr = () => {
        seat="5"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle373"
        cx="133.95918"
@@ -2400,6 +3087,9 @@ const HallDramteatr = () => {
        seat="6"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle374"
        cx="130.88419"
@@ -2409,6 +3099,9 @@ const HallDramteatr = () => {
        seat="7"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle375"
        cx="127.7091"
@@ -2418,6 +3111,9 @@ const HallDramteatr = () => {
        seat="8"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle376"
        cx="124.53403"
@@ -2427,6 +3123,9 @@ const HallDramteatr = () => {
        seat="9"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle377"
        cx="121.45901"
@@ -2436,6 +3135,9 @@ const HallDramteatr = () => {
        seat="10"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle378"
        cx="118.38395"
@@ -2445,6 +3147,9 @@ const HallDramteatr = () => {
        seat="11"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle379"
        cx="115.30885"
@@ -2454,6 +3159,9 @@ const HallDramteatr = () => {
        seat="12"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle380"
        cx="112.33379"
@@ -2463,6 +3171,9 @@ const HallDramteatr = () => {
        seat="13"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle381"
        cx="109.1587"
@@ -2472,6 +3183,9 @@ const HallDramteatr = () => {
        seat="14"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle382"
        cx="106.18363"
@@ -2481,6 +3195,9 @@ const HallDramteatr = () => {
        seat="15"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle383"
        cx="103.10863"
@@ -2490,6 +3207,9 @@ const HallDramteatr = () => {
        seat="16"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle384"
        cx="100.03362"
@@ -2499,6 +3219,9 @@ const HallDramteatr = () => {
        seat="17"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle385"
        cx="96.858543"
@@ -2508,6 +3231,9 @@ const HallDramteatr = () => {
        seat="18"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle386"
        cx="93.783463"
@@ -2517,6 +3243,9 @@ const HallDramteatr = () => {
        seat="19"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle387"
        cx="90.808434"
@@ -2526,6 +3255,9 @@ const HallDramteatr = () => {
        seat="20"
        row="3"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle388"
        cx="87.833374"
@@ -2535,6 +3267,9 @@ const HallDramteatr = () => {
        seat="21"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle389"
        cx="84.758362"
@@ -2544,6 +3279,9 @@ const HallDramteatr = () => {
        seat="22"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle390"
        cx="81.583359"
@@ -2553,6 +3291,9 @@ const HallDramteatr = () => {
        seat="23"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle408"
        cx="71.958344"
@@ -2562,6 +3303,9 @@ const HallDramteatr = () => {
        seat="24"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle409"
        cx="68.883347"
@@ -2571,6 +3315,9 @@ const HallDramteatr = () => {
        seat="25"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle410"
        cx="65.708313"
@@ -2580,6 +3327,9 @@ const HallDramteatr = () => {
        seat="26"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle411"
        cx="62.533333"
@@ -2589,6 +3339,9 @@ const HallDramteatr = () => {
        seat="27"
        row="8"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle414"
        cx="138.62178"
@@ -2598,6 +3351,9 @@ const HallDramteatr = () => {
        row="9"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle415"
        cx="135.34697"
@@ -2607,6 +3363,9 @@ const HallDramteatr = () => {
        seat="2"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle416"
        cx="132.17203"
@@ -2616,6 +3375,9 @@ const HallDramteatr = () => {
        seat="3"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle417"
        cx="129.09698"
@@ -2625,6 +3387,9 @@ const HallDramteatr = () => {
        seat="4"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle418"
        cx="125.92188"
@@ -2634,6 +3399,9 @@ const HallDramteatr = () => {
        seat="5"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle419"
        cx="122.84679"
@@ -2643,6 +3411,9 @@ const HallDramteatr = () => {
        seat="6"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle420"
        cx="119.77176"
@@ -2652,6 +3423,9 @@ const HallDramteatr = () => {
        seat="7"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle421"
        cx="116.5966"
@@ -2661,6 +3435,9 @@ const HallDramteatr = () => {
        seat="8"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle428"
        cx="101.77987"
@@ -2670,6 +3447,9 @@ const HallDramteatr = () => {
        seat="9"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle429"
        cx="98.704842"
@@ -2679,6 +3459,9 @@ const HallDramteatr = () => {
        seat="10"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle430"
        cx="95.629768"
@@ -2688,6 +3471,9 @@ const HallDramteatr = () => {
        seat="11"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle431"
        cx="92.554672"
@@ -2697,6 +3483,9 @@ const HallDramteatr = () => {
        seat="12"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle432"
        cx="89.579613"
@@ -2706,6 +3495,9 @@ const HallDramteatr = () => {
        seat="13"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle433"
        cx="86.40451"
@@ -2715,6 +3507,9 @@ const HallDramteatr = () => {
        seat="14"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle434"
        cx="83.429443"
@@ -2724,6 +3519,9 @@ const HallDramteatr = () => {
        seat="15"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle435"
        cx="80.354446"
@@ -2733,6 +3531,9 @@ const HallDramteatr = () => {
        seat="16"
        row="9"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle489"
        cx="152.90909"
@@ -2742,6 +3543,9 @@ const HallDramteatr = () => {
        row="10"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle490"
        cx="149.63428"
@@ -2751,6 +3555,9 @@ const HallDramteatr = () => {
        seat="2"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle491"
        cx="146.45934"
@@ -2760,6 +3567,9 @@ const HallDramteatr = () => {
        seat="3"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle492"
        cx="143.38429"
@@ -2769,6 +3579,9 @@ const HallDramteatr = () => {
        seat="4"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle493"
        cx="140.20921"
@@ -2778,6 +3591,9 @@ const HallDramteatr = () => {
        seat="5"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle494"
        cx="137.13416"
@@ -2787,6 +3603,9 @@ const HallDramteatr = () => {
        seat="6"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle495"
        cx="134.05916"
@@ -2796,6 +3615,9 @@ const HallDramteatr = () => {
        seat="7"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle496"
        cx="130.88408"
@@ -2805,6 +3627,9 @@ const HallDramteatr = () => {
        seat="8"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle497"
        cx="127.70904"
@@ -2814,6 +3639,9 @@ const HallDramteatr = () => {
        seat="9"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle498"
        cx="124.63402"
@@ -2823,6 +3651,9 @@ const HallDramteatr = () => {
        seat="10"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle499"
        cx="121.55894"
@@ -2832,6 +3663,9 @@ const HallDramteatr = () => {
        seat="11"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle500"
        cx="95.200508"
@@ -2841,6 +3675,9 @@ const HallDramteatr = () => {
        seat="12"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle501"
        cx="92.225449"
@@ -2850,6 +3687,9 @@ const HallDramteatr = () => {
        seat="13"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle502"
        cx="89.050346"
@@ -2859,6 +3699,9 @@ const HallDramteatr = () => {
        seat="14"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle503"
        cx="86.075279"
@@ -2868,6 +3711,9 @@ const HallDramteatr = () => {
        seat="15"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle504"
        cx="83.000282"
@@ -2877,6 +3723,9 @@ const HallDramteatr = () => {
        seat="16"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle505"
        cx="79.92527"
@@ -2886,6 +3735,9 @@ const HallDramteatr = () => {
        seat="17"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle506"
        cx="76.750191"
@@ -2895,6 +3747,9 @@ const HallDramteatr = () => {
        seat="18"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle507"
        cx="73.675117"
@@ -2904,6 +3759,9 @@ const HallDramteatr = () => {
        seat="19"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle508"
        cx="70.700081"
@@ -2913,6 +3771,9 @@ const HallDramteatr = () => {
        seat="20"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle509"
        cx="67.725021"
@@ -2922,6 +3783,9 @@ const HallDramteatr = () => {
        seat="21"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle510"
        cx="64.650009"
@@ -2931,6 +3795,9 @@ const HallDramteatr = () => {
        seat="22"
        row="10"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle560"
        cx="162.10431"
@@ -2940,6 +3807,9 @@ const HallDramteatr = () => {
        row="11"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle561"
        cx="158.8295"
@@ -2949,6 +3819,9 @@ const HallDramteatr = () => {
        seat="2"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle562"
        cx="155.65456"
@@ -2958,6 +3831,9 @@ const HallDramteatr = () => {
        seat="3"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle563"
        cx="152.57951"
@@ -2967,6 +3843,9 @@ const HallDramteatr = () => {
        seat="4"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle564"
        cx="149.40443"
@@ -2976,6 +3855,9 @@ const HallDramteatr = () => {
        seat="5"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle565"
        cx="146.32938"
@@ -2985,6 +3867,9 @@ const HallDramteatr = () => {
        seat="6"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle566"
        cx="143.25438"
@@ -2994,6 +3879,9 @@ const HallDramteatr = () => {
        seat="7"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle567"
        cx="140.0793"
@@ -3003,6 +3891,9 @@ const HallDramteatr = () => {
        seat="8"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle568"
        cx="136.90427"
@@ -3012,6 +3903,9 @@ const HallDramteatr = () => {
        seat="9"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle569"
        cx="133.82925"
@@ -3021,6 +3915,9 @@ const HallDramteatr = () => {
        seat="10"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle570"
        cx="130.75423"
@@ -3030,6 +3927,9 @@ const HallDramteatr = () => {
        seat="11"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle571"
        cx="127.67916"
@@ -3039,6 +3939,9 @@ const HallDramteatr = () => {
        seat="12"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle572"
        cx="124.70412"
@@ -3048,6 +3951,9 @@ const HallDramteatr = () => {
        seat="13"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle573"
        cx="121.52904"
@@ -3057,6 +3963,9 @@ const HallDramteatr = () => {
        seat="14"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle574"
        cx="118.55396"
@@ -3066,6 +3975,9 @@ const HallDramteatr = () => {
        seat="15"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle575"
        cx="115.479"
@@ -3075,6 +3987,9 @@ const HallDramteatr = () => {
        seat="16"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle590"
        cx="101.42132"
@@ -3084,6 +3999,9 @@ const HallDramteatr = () => {
        seat="17"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle591"
        cx="98.246254"
@@ -3093,6 +4011,9 @@ const HallDramteatr = () => {
        seat="18"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle592"
        cx="95.171181"
@@ -3102,6 +4023,9 @@ const HallDramteatr = () => {
        seat="19"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle593"
        cx="92.196144"
@@ -3111,6 +4035,9 @@ const HallDramteatr = () => {
        seat="20"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle594"
        cx="89.221085"
@@ -3120,6 +4047,9 @@ const HallDramteatr = () => {
        seat="21"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle595"
        cx="86.146072"
@@ -3129,6 +4059,9 @@ const HallDramteatr = () => {
        seat="22"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle596"
        cx="82.971069"
@@ -3138,6 +4071,9 @@ const HallDramteatr = () => {
        seat="23"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle597"
        cx="79.69606"
@@ -3147,6 +4083,9 @@ const HallDramteatr = () => {
        seat="24"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle598"
        cx="76.621063"
@@ -3156,6 +4095,9 @@ const HallDramteatr = () => {
        seat="25"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle599"
        cx="73.44603"
@@ -3165,6 +4107,9 @@ const HallDramteatr = () => {
        seat="26"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle600"
        cx="70.271049"
@@ -3174,6 +4119,9 @@ const HallDramteatr = () => {
        seat="27"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle601"
        cx="66.996017"
@@ -3183,6 +4131,9 @@ const HallDramteatr = () => {
        seat="28"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle602"
        cx="63.921017"
@@ -3192,6 +4143,9 @@ const HallDramteatr = () => {
        seat="29"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle603"
        cx="60.846004"
@@ -3201,6 +4155,9 @@ const HallDramteatr = () => {
        seat="30"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle604"
        cx="57.771"
@@ -3210,6 +4167,9 @@ const HallDramteatr = () => {
        seat="31"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle605"
        cx="54.495998"
@@ -3219,6 +4179,9 @@ const HallDramteatr = () => {
        seat="32"
        row="11"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle648"
        cx="159.02939"
@@ -3228,6 +4191,9 @@ const HallDramteatr = () => {
        row="12"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle649"
        cx="155.75458"
@@ -3237,6 +4203,9 @@ const HallDramteatr = () => {
        seat="2"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle650"
        cx="152.57964"
@@ -3246,6 +4215,9 @@ const HallDramteatr = () => {
        seat="3"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle651"
        cx="149.50459"
@@ -3255,6 +4227,9 @@ const HallDramteatr = () => {
        seat="4"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle652"
        cx="146.32951"
@@ -3264,6 +4239,9 @@ const HallDramteatr = () => {
        seat="5"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle653"
        cx="143.25446"
@@ -3273,6 +4251,9 @@ const HallDramteatr = () => {
        seat="6"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle654"
        cx="140.17946"
@@ -3282,6 +4263,9 @@ const HallDramteatr = () => {
        seat="7"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle655"
        cx="137.00438"
@@ -3291,6 +4275,9 @@ const HallDramteatr = () => {
        seat="8"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle656"
        cx="133.82935"
@@ -3300,6 +4287,9 @@ const HallDramteatr = () => {
        seat="9"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle657"
        cx="130.75433"
@@ -3309,6 +4299,9 @@ const HallDramteatr = () => {
        seat="10"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle658"
        cx="127.67929"
@@ -3318,6 +4311,9 @@ const HallDramteatr = () => {
        seat="11"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle659"
        cx="124.60417"
@@ -3327,6 +4323,9 @@ const HallDramteatr = () => {
        seat="12"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle660"
        cx="121.62916"
@@ -3336,6 +4335,9 @@ const HallDramteatr = () => {
        seat="13"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle661"
        cx="118.45407"
@@ -3345,6 +4347,9 @@ const HallDramteatr = () => {
        seat="14"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle662"
        cx="115.479"
@@ -3354,6 +4359,9 @@ const HallDramteatr = () => {
        seat="15"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle676"
        cx="101.42134"
@@ -3363,6 +4371,9 @@ const HallDramteatr = () => {
        seat="16"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle677"
        cx="98.346329"
@@ -3372,6 +4383,9 @@ const HallDramteatr = () => {
        seat="17"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle678"
        cx="95.171249"
@@ -3381,6 +4395,9 @@ const HallDramteatr = () => {
        seat="18"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle679"
        cx="92.096176"
@@ -3390,6 +4407,9 @@ const HallDramteatr = () => {
        seat="19"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle680"
        cx="89.12114"
@@ -3399,6 +4419,9 @@ const HallDramteatr = () => {
        seat="20"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle681"
        cx="86.14608"
@@ -3408,6 +4431,9 @@ const HallDramteatr = () => {
        seat="21"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle682"
        cx="83.071068"
@@ -3417,6 +4443,9 @@ const HallDramteatr = () => {
        seat="22"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle683"
        cx="79.896065"
@@ -3426,6 +4455,9 @@ const HallDramteatr = () => {
        seat="23"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle684"
        cx="76.621056"
@@ -3435,6 +4467,9 @@ const HallDramteatr = () => {
        seat="24"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle685"
        cx="73.546059"
@@ -3444,6 +4479,9 @@ const HallDramteatr = () => {
        seat="25"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle686"
        cx="70.371025"
@@ -3453,6 +4491,9 @@ const HallDramteatr = () => {
        seat="26"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle687"
        cx="67.196045"
@@ -3462,6 +4503,9 @@ const HallDramteatr = () => {
        seat="27"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle688"
        cx="63.921009"
@@ -3471,6 +4515,9 @@ const HallDramteatr = () => {
        seat="28"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle689"
        cx="60.846012"
@@ -3480,6 +4527,9 @@ const HallDramteatr = () => {
        seat="29"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#53ac4d", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle690"
        cx="57.771"
@@ -3489,6 +4539,9 @@ const HallDramteatr = () => {
        seat="30"
        row="12"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle704"
        cx="156.05438"
@@ -3498,6 +4551,9 @@ const HallDramteatr = () => {
        row="13"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle705"
        cx="152.77957"
@@ -3507,6 +4563,9 @@ const HallDramteatr = () => {
        seat="2"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle706"
        cx="149.60463"
@@ -3516,6 +4575,9 @@ const HallDramteatr = () => {
        seat="3"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle707"
        cx="146.52959"
@@ -3525,6 +4587,9 @@ const HallDramteatr = () => {
        seat="4"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle708"
        cx="143.35451"
@@ -3534,6 +4599,9 @@ const HallDramteatr = () => {
        seat="5"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle709"
        cx="140.27945"
@@ -3543,6 +4611,9 @@ const HallDramteatr = () => {
        seat="6"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle710"
        cx="137.20445"
@@ -3552,6 +4623,9 @@ const HallDramteatr = () => {
        seat="7"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle711"
        cx="134.02937"
@@ -3561,6 +4635,9 @@ const HallDramteatr = () => {
        seat="8"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle712"
        cx="130.85434"
@@ -3570,6 +4647,9 @@ const HallDramteatr = () => {
        seat="9"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle713"
        cx="127.77931"
@@ -3579,6 +4659,9 @@ const HallDramteatr = () => {
        seat="10"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle714"
        cx="124.70423"
@@ -3588,6 +4671,9 @@ const HallDramteatr = () => {
        seat="11"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle715"
        cx="121.62912"
@@ -3597,6 +4683,9 @@ const HallDramteatr = () => {
        seat="12"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle716"
        cx="118.65409"
@@ -3606,6 +4695,9 @@ const HallDramteatr = () => {
        seat="13"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle717"
        cx="115.479"
@@ -3615,6 +4707,9 @@ const HallDramteatr = () => {
        seat="14"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle730"
        cx="101.42113"
@@ -3624,6 +4719,9 @@ const HallDramteatr = () => {
        seat="15"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle731"
        cx="98.34613"
@@ -3633,6 +4731,9 @@ const HallDramteatr = () => {
        seat="16"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle732"
        cx="95.271118"
@@ -3642,6 +4743,9 @@ const HallDramteatr = () => {
        seat="17"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle733"
        cx="92.096039"
@@ -3651,6 +4755,9 @@ const HallDramteatr = () => {
        seat="18"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle734"
        cx="89.020966"
@@ -3660,6 +4767,9 @@ const HallDramteatr = () => {
        seat="19"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle735"
        cx="86.045929"
@@ -3669,6 +4779,9 @@ const HallDramteatr = () => {
        seat="20"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle736"
        cx="83.070869"
@@ -3678,6 +4791,9 @@ const HallDramteatr = () => {
        seat="21"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle737"
        cx="79.995857"
@@ -3687,6 +4803,9 @@ const HallDramteatr = () => {
        seat="22"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle738"
        cx="76.820854"
@@ -3696,6 +4815,9 @@ const HallDramteatr = () => {
        seat="23"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle739"
        cx="73.545845"
@@ -3705,6 +4827,9 @@ const HallDramteatr = () => {
        seat="24"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle740"
        cx="70.470848"
@@ -3714,6 +4839,9 @@ const HallDramteatr = () => {
        seat="25"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle741"
        cx="67.295815"
@@ -3723,6 +4851,9 @@ const HallDramteatr = () => {
        seat="26"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle742"
        cx="64.120834"
@@ -3732,6 +4863,9 @@ const HallDramteatr = () => {
        seat="27"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle743"
        cx="60.845802"
@@ -3741,6 +4875,9 @@ const HallDramteatr = () => {
        seat="28"
        row="13"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle756"
        cx="149.90433"
@@ -3750,6 +4887,9 @@ const HallDramteatr = () => {
        row="14"
        seat="1"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle757"
        cx="146.62952"
@@ -3759,6 +4899,9 @@ const HallDramteatr = () => {
        seat="2"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle758"
        cx="143.45457"
@@ -3768,6 +4911,9 @@ const HallDramteatr = () => {
        seat="3"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle759"
        cx="140.37953"
@@ -3777,6 +4923,9 @@ const HallDramteatr = () => {
        seat="4"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle760"
        cx="137.20445"
@@ -3786,6 +4935,9 @@ const HallDramteatr = () => {
        seat="5"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle761"
        cx="134.12939"
@@ -3795,6 +4947,9 @@ const HallDramteatr = () => {
        seat="6"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle762"
        cx="131.0544"
@@ -3804,6 +4959,9 @@ const HallDramteatr = () => {
        seat="7"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle763"
        cx="127.87931"
@@ -3813,6 +4971,9 @@ const HallDramteatr = () => {
        seat="8"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle764"
        cx="124.70425"
@@ -3822,6 +4983,9 @@ const HallDramteatr = () => {
        seat="9"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle765"
        cx="121.62918"
@@ -3831,6 +4995,9 @@ const HallDramteatr = () => {
        seat="10"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle766"
        cx="118.55408"
@@ -3840,6 +5007,9 @@ const HallDramteatr = () => {
        seat="11"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle767"
        cx="115.479"
@@ -3849,6 +5019,9 @@ const HallDramteatr = () => {
        seat="12"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle778"
        cx="101.42142"
@@ -3858,6 +5031,9 @@ const HallDramteatr = () => {
        seat="13"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle779"
        cx="98.246338"
@@ -3867,6 +5043,9 @@ const HallDramteatr = () => {
        seat="14"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle780"
        cx="95.271271"
@@ -3876,6 +5055,9 @@ const HallDramteatr = () => {
        seat="15"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle781"
        cx="92.196274"
@@ -3885,6 +5067,9 @@ const HallDramteatr = () => {
        seat="16"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle782"
        cx="89.121262"
@@ -3894,6 +5079,9 @@ const HallDramteatr = () => {
        seat="17"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle783"
        cx="85.946182"
@@ -3903,6 +5091,9 @@ const HallDramteatr = () => {
        seat="18"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle784"
        cx="82.871109"
@@ -3912,6 +5103,9 @@ const HallDramteatr = () => {
        seat="19"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle785"
        cx="79.896072"
@@ -3921,6 +5115,9 @@ const HallDramteatr = () => {
        seat="20"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle786"
        cx="76.921013"
@@ -3930,6 +5127,9 @@ const HallDramteatr = () => {
        seat="21"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle787"
        cx="73.846001"
@@ -3939,6 +5139,9 @@ const HallDramteatr = () => {
        seat="22"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle788"
        cx="70.670998"
@@ -3948,6 +5151,9 @@ const HallDramteatr = () => {
        seat="23"
        row="14"
        floor="parterre" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle808"
        cx="122.38794"
@@ -3957,6 +5163,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle809"
        cx="119.11311"
@@ -3966,6 +5175,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle810"
        cx="115.93811"
@@ -3975,6 +5187,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle811"
        cx="112.86301"
@@ -3984,6 +5199,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle812"
        cx="104.39629"
@@ -3993,6 +5211,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle813"
        cx="101.32119"
@@ -4002,6 +5223,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle814"
        cx="98.246124"
@@ -4011,6 +5235,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle815"
        cx="95.070961"
@@ -4020,6 +5247,9 @@ const HallDramteatr = () => {
        seat="8"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle822"
        cx="122.38794"
@@ -4029,6 +5259,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle823"
        cx="119.11311"
@@ -4038,6 +5271,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle824"
        cx="115.93811"
@@ -4047,6 +5283,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle825"
        cx="112.86301"
@@ -4056,6 +5295,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle826"
        cx="104.39629"
@@ -4065,6 +5307,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle827"
        cx="101.32119"
@@ -4074,6 +5319,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle828"
        cx="98.246124"
@@ -4083,6 +5331,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle829"
        cx="95.070961"
@@ -4092,6 +5343,9 @@ const HallDramteatr = () => {
        seat="8"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle836"
        cx="122.38794"
@@ -4101,6 +5355,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle837"
        cx="119.11311"
@@ -4110,6 +5367,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle838"
        cx="115.93811"
@@ -4119,6 +5379,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle839"
        cx="112.86301"
@@ -4128,6 +5391,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle840"
        cx="104.39629"
@@ -4137,6 +5403,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle841"
        cx="101.32119"
@@ -4146,6 +5415,9 @@ const HallDramteatr = () => {
        seat="6"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle842"
        cx="98.246124"
@@ -4155,6 +5427,9 @@ const HallDramteatr = () => {
        seat="7"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle843"
        cx="95.070961"
@@ -4164,6 +5439,9 @@ const HallDramteatr = () => {
        seat="8"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle856"
        cx="122.38794"
@@ -4173,6 +5451,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle857"
        cx="119.11311"
@@ -4182,6 +5463,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle858"
        cx="115.93811"
@@ -4191,6 +5475,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle859"
        cx="112.86301"
@@ -4200,6 +5487,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle860"
        cx="104.39629"
@@ -4209,6 +5499,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle861"
        cx="101.32119"
@@ -4218,6 +5511,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle862"
        cx="98.246124"
@@ -4227,6 +5523,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle863"
        cx="95.070961"
@@ -4236,6 +5535,9 @@ const HallDramteatr = () => {
        seat="8"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle864"
        cx="122.38794"
@@ -4245,6 +5547,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle865"
        cx="119.11311"
@@ -4254,6 +5559,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle866"
        cx="115.93811"
@@ -4263,6 +5571,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle867"
        cx="112.86301"
@@ -4272,6 +5583,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle868"
        cx="104.39629"
@@ -4281,6 +5595,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle869"
        cx="101.32119"
@@ -4290,6 +5607,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle870"
        cx="98.246124"
@@ -4299,6 +5619,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle871"
        cx="95.070961"
@@ -4308,6 +5631,9 @@ const HallDramteatr = () => {
        seat="8"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        // skmvksnvneoisvknsbdonsofbnkdfnvivind
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.249057" }}
        id="circle872"
@@ -4318,6 +5644,9 @@ const HallDramteatr = () => {
        seat="1"
        floor="balcony"
        r="1.25"/><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle873"
        cx="119.11311"
@@ -4327,6 +5656,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle874"
        cx="115.93811"
@@ -4336,6 +5668,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle875"
        cx="112.86301"
@@ -4345,6 +5680,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle876"
        cx="104.39629"
@@ -4354,6 +5692,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle877"
        cx="101.32119"
@@ -4363,6 +5704,9 @@ const HallDramteatr = () => {
        seat="6"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle878"
        cx="98.246124"
@@ -4372,6 +5716,9 @@ const HallDramteatr = () => {
        seat="7"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle879"
        cx="95.070961"
@@ -4381,6 +5728,9 @@ const HallDramteatr = () => {
        seat="8"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle956"
        cx="104.39629"
@@ -4390,6 +5740,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle957"
        cx="101.32119"
@@ -4399,6 +5752,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle958"
        cx="98.246124"
@@ -4408,6 +5764,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle959"
        cx="95.070961"
@@ -4417,6 +5776,9 @@ const HallDramteatr = () => {
        seat="8"
        row="1"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle960"
        cx="104.39629"
@@ -4426,6 +5788,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle961"
        cx="101.32119"
@@ -4435,6 +5800,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle962"
        cx="98.246124"
@@ -4444,6 +5812,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle963"
        cx="95.070961"
@@ -4453,6 +5824,9 @@ const HallDramteatr = () => {
        seat="8"
        row="2"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle964"
        cx="104.39629"
@@ -4462,6 +5836,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle965"
        cx="101.32119"
@@ -4471,6 +5848,9 @@ const HallDramteatr = () => {
        seat="6"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle966"
        cx="98.246124"
@@ -4480,6 +5860,9 @@ const HallDramteatr = () => {
        seat="7"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle967"
        cx="95.070961"
@@ -4489,6 +5872,9 @@ const HallDramteatr = () => {
        seat="8"
        row="3"
        floor="mezzanine" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle968"
        cx="104.39629"
@@ -4498,6 +5884,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle969"
        cx="101.32119"
@@ -4507,6 +5896,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle970"
        cx="98.246124"
@@ -4516,6 +5908,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle971"
        cx="95.070961"
@@ -4525,6 +5920,9 @@ const HallDramteatr = () => {
        seat="8"
        row="1"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle972"
        cx="104.39629"
@@ -4534,6 +5932,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle973"
        cx="101.32119"
@@ -4543,6 +5944,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle974"
        cx="98.246124"
@@ -4552,6 +5956,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle975"
        cx="95.070961"
@@ -4561,6 +5968,9 @@ const HallDramteatr = () => {
        seat="8"
        row="2"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle976"
        cx="104.39629"
@@ -4570,6 +5980,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle977"
        cx="101.32119"
@@ -4579,6 +5992,9 @@ const HallDramteatr = () => {
        seat="6"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle978"
        cx="98.246124"
@@ -4588,6 +6004,9 @@ const HallDramteatr = () => {
        seat="7"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle979"
        cx="95.070961"
@@ -4597,6 +6016,9 @@ const HallDramteatr = () => {
        seat="8"
        row="3"
        floor="balcony" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1002"
        cx="137.9628"
@@ -4606,6 +6028,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1003"
        cx="134.688"
@@ -4615,6 +6040,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1004"
        cx="131.51305"
@@ -4624,6 +6052,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1005"
        cx="128.438"
@@ -4633,6 +6064,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1006"
        cx="137.9628"
@@ -4642,6 +6076,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1007"
        cx="134.688"
@@ -4651,6 +6088,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1008"
        cx="131.51305"
@@ -4660,6 +6100,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1009"
        cx="128.438"
@@ -4669,6 +6112,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1010"
        cx="137.9628"
@@ -4678,6 +6124,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1011"
        cx="134.688"
@@ -4687,6 +6136,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1012"
        cx="131.51305"
@@ -4696,6 +6148,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1013"
        cx="128.438"
@@ -4705,6 +6160,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="mezzanineLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1014"
        cx="137.9628"
@@ -4714,6 +6172,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1015"
        cx="134.688"
@@ -4723,6 +6184,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1016"
        cx="131.51305"
@@ -4732,6 +6196,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1017"
        cx="128.438"
@@ -4741,6 +6208,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1018"
        cx="137.9628"
@@ -4750,6 +6220,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1019"
        cx="134.688"
@@ -4759,6 +6232,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1020"
        cx="131.51305"
@@ -4768,6 +6244,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1021"
        cx="128.438"
@@ -4777,6 +6256,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1022"
        cx="134.88776"
@@ -4786,6 +6268,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1023"
        cx="131.61296"
@@ -4795,6 +6280,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1024"
        cx="128.438"
@@ -4804,6 +6292,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="balconyLoggia3" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1136"
        cx="89.279602"
@@ -4813,6 +6304,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1137"
        cx="86.004745"
@@ -4822,6 +6316,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1138"
        cx="82.829765"
@@ -4831,6 +6328,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1139"
        cx="79.754669"
@@ -4840,6 +6340,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1140"
        cx="89.279602"
@@ -4849,6 +6352,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1141"
        cx="86.004745"
@@ -4858,6 +6364,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1142"
        cx="82.829765"
@@ -4867,6 +6376,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1143"
        cx="79.754669"
@@ -4876,6 +6388,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1144"
        cx="89.279602"
@@ -4885,6 +6400,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1145"
        cx="86.004745"
@@ -4894,6 +6412,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1146"
        cx="82.829765"
@@ -4903,6 +6424,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1147"
        cx="79.754669"
@@ -4912,6 +6436,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="mezzanineLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1148"
        cx="89.279602"
@@ -4921,6 +6448,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1149"
        cx="86.004745"
@@ -4930,6 +6460,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1150"
        cx="82.829765"
@@ -4939,6 +6472,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1151"
        cx="79.754669"
@@ -4948,6 +6484,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1152"
        cx="89.279602"
@@ -4957,6 +6496,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1153"
        cx="86.004745"
@@ -4966,6 +6508,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1154"
        cx="82.829765"
@@ -4975,6 +6520,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1155"
        cx="79.754669"
@@ -4984,6 +6532,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1156"
        cx="89.17984"
@@ -4993,6 +6544,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1157"
        cx="85.905006"
@@ -5002,6 +6556,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1158"
        cx="82.730003"
@@ -5011,6 +6568,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="balconyLoggia4" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1203"
        cx="162.075"
@@ -5020,6 +6580,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1204"
        cx="158.80019"
@@ -5029,6 +6592,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1205"
        cx="155.62524"
@@ -5038,6 +6604,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1206"
        cx="152.5502"
@@ -5047,6 +6616,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1207"
        cx="149.37512"
@@ -5056,6 +6628,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1208"
        cx="146.30006"
@@ -5065,6 +6640,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1215"
        cx="162.075"
@@ -5074,6 +6652,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1216"
        cx="158.80019"
@@ -5083,6 +6664,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1217"
        cx="155.62524"
@@ -5092,6 +6676,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1218"
        cx="152.5502"
@@ -5101,6 +6688,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1219"
        cx="149.37512"
@@ -5110,6 +6700,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1220"
        cx="146.30006"
@@ -5119,6 +6712,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1221"
        cx="143.22507"
@@ -5128,6 +6724,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1227"
        cx="159"
@@ -5137,6 +6736,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1228"
        cx="155.72519"
@@ -5146,6 +6748,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1229"
        cx="152.55025"
@@ -5155,6 +6760,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1230"
        cx="149.4752"
@@ -5164,6 +6772,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1231"
        cx="146.30013"
@@ -5173,6 +6784,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="mezzanineLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1239"
        cx="158.99988"
@@ -5182,6 +6796,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1240"
        cx="155.72507"
@@ -5191,6 +6808,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1241"
        cx="152.55013"
@@ -5200,6 +6820,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1242"
        cx="149.47508"
@@ -5209,6 +6832,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1243"
        cx="146.3"
@@ -5218,6 +6844,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1251"
        cx="162.075"
@@ -5227,6 +6856,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1252"
        cx="158.80019"
@@ -5236,6 +6868,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1253"
        cx="155.62524"
@@ -5245,6 +6880,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1254"
        cx="152.5502"
@@ -5254,6 +6892,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1255"
        cx="149.37512"
@@ -5263,6 +6904,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1256"
        cx="146.30006"
@@ -5272,6 +6916,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1257"
        cx="143.22507"
@@ -5281,6 +6928,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1263"
        cx="155.8248"
@@ -5290,6 +6940,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1264"
        cx="152.54999"
@@ -5299,6 +6952,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1265"
        cx="149.37505"
@@ -5308,6 +6964,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1266"
        cx="146.3"
@@ -5317,6 +6976,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="balconyLoggia2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1443"
        cx="74.734177"
@@ -5326,6 +6988,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1444"
        cx="71.45932"
@@ -5335,6 +7000,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1445"
        cx="68.284317"
@@ -5344,6 +7012,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1446"
        cx="65.209251"
@@ -5353,6 +7024,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1447"
        cx="62.034168"
@@ -5362,6 +7036,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1448"
        cx="58.959072"
@@ -5371,6 +7048,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#008080", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1449"
        cx="55.883999"
@@ -5380,6 +7060,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1455"
        cx="74.734177"
@@ -5389,6 +7072,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1456"
        cx="71.45932"
@@ -5398,6 +7084,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1457"
        cx="68.284317"
@@ -5407,6 +7096,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1458"
        cx="65.209251"
@@ -5416,6 +7108,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1459"
        cx="62.034168"
@@ -5425,6 +7120,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1460"
        cx="58.959072"
@@ -5434,6 +7132,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fcb203", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1461"
        cx="55.883999"
@@ -5443,6 +7144,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1467"
        cx="71.459427"
@@ -5452,6 +7156,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1468"
        cx="68.18457"
@@ -5461,6 +7168,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1469"
        cx="65.009567"
@@ -5470,6 +7180,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1470"
        cx="61.934502"
@@ -5479,6 +7192,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1471"
        cx="58.759415"
@@ -5488,6 +7204,9 @@ const HallDramteatr = () => {
        seat="5"
        row="3"
        floor="mezzanineLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1479"
        cx="74.734177"
@@ -5497,6 +7216,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1480"
        cx="71.45932"
@@ -5506,6 +7228,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1481"
        cx="68.284317"
@@ -5515,6 +7240,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1482"
        cx="65.209251"
@@ -5524,6 +7252,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1483"
        cx="62.034168"
@@ -5533,6 +7264,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1484"
        cx="58.959072"
@@ -5542,6 +7276,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1486"
        cx="74.734177"
@@ -5551,6 +7288,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1487"
        cx="71.45932"
@@ -5560,6 +7300,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1488"
        cx="68.284317"
@@ -5569,6 +7312,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1489"
        cx="65.209251"
@@ -5578,6 +7324,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1490"
        cx="62.034168"
@@ -5587,6 +7336,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1493"
        cx="71.459427"
@@ -5596,6 +7348,9 @@ const HallDramteatr = () => {
        row="3"
        seat="1"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1494"
        cx="68.18457"
@@ -5605,6 +7360,9 @@ const HallDramteatr = () => {
        seat="2"
        row="3"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1495"
        cx="65.009567"
@@ -5614,6 +7372,9 @@ const HallDramteatr = () => {
        seat="3"
        row="3"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1496"
        cx="61.934502"
@@ -5623,6 +7384,9 @@ const HallDramteatr = () => {
        seat="4"
        row="3"
        floor="balconyLoggia5" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1515"
        cx="186.94576"
@@ -5632,6 +7396,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1516"
        cx="183.67094"
@@ -5641,6 +7408,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1517"
        cx="180.496"
@@ -5650,6 +7420,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1518"
        cx="177.4207"
@@ -5659,6 +7432,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1519"
        cx="174.24562"
@@ -5668,6 +7444,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1520"
        cx="171.17056"
@@ -5677,6 +7456,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1521"
        cx="168.09557"
@@ -5686,6 +7468,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1527"
        cx="174.47475"
@@ -5695,6 +7480,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1528"
        cx="171.19994"
@@ -5704,6 +7492,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1529"
        cx="168.02499"
@@ -5713,6 +7504,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1531"
        cx="177.42061"
@@ -5722,6 +7516,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1532"
        cx="174.1458"
@@ -5731,6 +7528,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1533"
        cx="170.97087"
@@ -5740,6 +7540,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1534"
        cx="167.89583"
@@ -5749,6 +7552,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1539"
        cx="180.59557"
@@ -5758,6 +7564,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1540"
        cx="177.32077"
@@ -5767,6 +7576,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1541"
        cx="174.14581"
@@ -5776,6 +7588,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1542"
        cx="171.07079"
@@ -5785,6 +7600,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1543"
        cx="167.89571"
@@ -5794,6 +7612,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanineLoggia1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1547"
        cx="50.421242"
@@ -5803,6 +7624,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1548"
        cx="47.146385"
@@ -5812,6 +7636,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1549"
        cx="43.971382"
@@ -5821,6 +7648,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1550"
        cx="40.896317"
@@ -5830,6 +7660,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1551"
        cx="37.72123"
@@ -5839,6 +7672,9 @@ const HallDramteatr = () => {
        seat="5"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1552"
        cx="34.646133"
@@ -5848,6 +7684,9 @@ const HallDramteatr = () => {
        seat="6"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#2815bd", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1553"
        cx="31.57106"
@@ -5857,6 +7696,9 @@ const HallDramteatr = () => {
        seat="7"
        row="2"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1559"
        cx="50.421242"
@@ -5866,6 +7708,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1560"
        cx="47.146385"
@@ -5875,6 +7720,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1561"
        cx="43.971382"
@@ -5884,6 +7732,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="balconyLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1563"
        cx="50.950409"
@@ -5893,6 +7744,9 @@ const HallDramteatr = () => {
        row="2"
        seat="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1564"
        cx="47.675552"
@@ -5902,6 +7756,9 @@ const HallDramteatr = () => {
        seat="2"
        row="2"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1565"
        cx="44.500549"
@@ -5911,6 +7768,9 @@ const HallDramteatr = () => {
        seat="3"
        row="2"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#806600", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1566"
        cx="41.425484"
@@ -5920,6 +7780,9 @@ const HallDramteatr = () => {
        seat="4"
        row="2"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1571"
        cx="50.950409"
@@ -5929,6 +7792,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1572"
        cx="47.675552"
@@ -5938,6 +7804,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1573"
        cx="44.500549"
@@ -5947,6 +7816,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1574"
        cx="41.425484"
@@ -5956,6 +7828,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#fa2a7f", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1575"
        cx="38.250397"
@@ -5965,6 +7840,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="mezzanineLoggia6" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1579"
        cx="183.77054"
@@ -5974,6 +7852,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1580"
        cx="180.49573"
@@ -5983,6 +7864,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1581"
        cx="177.32079"
@@ -5992,6 +7876,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1582"
        cx="174.24574"
@@ -6001,6 +7888,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1585"
        cx="181.98349"
@@ -6010,6 +7900,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1586"
        cx="178.90843"
@@ -6019,6 +7912,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1587"
        cx="175.83344"
@@ -6028,6 +7924,9 @@ const HallDramteatr = () => {
        seat="7"
        row="1"
        floor="baignoire1" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1589"
        cx="45.12957"
@@ -6037,6 +7936,9 @@ const HallDramteatr = () => {
        row="1"
        seat="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1590"
        cx="41.854713"
@@ -6046,6 +7948,9 @@ const HallDramteatr = () => {
        seat="2"
        row="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1591"
        cx="38.67971"
@@ -6055,6 +7960,9 @@ const HallDramteatr = () => {
        seat="3"
        row="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1592"
        cx="35.604645"
@@ -6064,6 +7972,9 @@ const HallDramteatr = () => {
        seat="4"
        row="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1595"
        cx="43.342167"
@@ -6073,6 +7984,9 @@ const HallDramteatr = () => {
        seat="5"
        row="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1596"
        cx="40.267071"
@@ -6082,6 +7996,9 @@ const HallDramteatr = () => {
        seat="6"
        row="1"
        floor="baignoire2" /><circle
+       onClick={e => choosePlace(e.target)} 
+         onMouseOver={e => enterCircle(e)}
+       onMouseOut={e => leaveCircle(e)}
        style={{ display:"inline", fill:"#cf59cf", fillOpacity:"1", strokeWidth:"0.248452" }}
        id="circle1597"
        cx="37.191998"
@@ -6094,6 +8011,7 @@ const HallDramteatr = () => {
      groupmode="layer"
      id="layer3"
      label="Ladle"
+     style={{display: 'inline',pointerEvents: 'none'}}
      insensitive="true"><text
        space="preserve"
        style={{ fontStyle:"normal", fontVariant:"normal",fontWeight:"bold", fontStretch:"normal", fontSize:"1.23472px", fontFamily:"Arial", display:"inline", fill:"#ffffff", fillOpacity:"1", strokeWidth:"0.264583" }}
@@ -13083,6 +15001,6 @@ const HallDramteatr = () => {
 
         </div>
     );
-}
+});
 
 export default HallDramteatr;
