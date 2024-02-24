@@ -10,6 +10,7 @@ import { useContext, useEffect } from "react";
 import { observer } from 'mobx-react-lite';
 import { check } from './http/userAPI';
 import HallDruzhbaNarodiv from './components/HallDruzhbaNarodiv/HallDruzhbaNarodiv';
+import HallDramteatr from './components/HallDramteatr/HallDramteatr';
 
 const App = observer(() => {
   const { user } = useContext(Context);
@@ -36,6 +37,7 @@ const App = observer(() => {
           <Route path='/concert/:id' element={ <ConcertPage/> }/>
           <Route path='/fila' element={ <HallFilarmoniya/> }/>
           <Route path='/druzhba' element={ <HallDruzhbaNarodiv/> }/>
+          <Route path='/dram' element={ <HallDramteatr/> }/>
         </Routes>
       </BrowserRouter>
     </div>
