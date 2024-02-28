@@ -20,7 +20,7 @@ const ticketSchema = new Schema({
     },
     floor:{
         type: String,
-        enum: ['parterre', 'balcony', 'leftLoggia', 'rightLoggia'],
+        enum: ['parterre', 'balcony', 'leftLoggia', 'rightLoggia', 'mezzanineLoggia1', 'mezzanineLoggia2', 'mezzanineLoggia3', 'mezzanineLoggia4', 'mezzanineLoggia5', 'mezzanineLoggia6', 'balconyLoggia1', 'balconyLoggia2', 'balconyLoggia3', 'balconyLoggia4', 'balconyLoggia5', 'balconyLoggia6', 'baignoire1', 'baignoire2'],
         required: true
     },
     booked:{

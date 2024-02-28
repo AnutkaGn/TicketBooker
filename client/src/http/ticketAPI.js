@@ -19,12 +19,20 @@ export const getTickets = async(id) =>{
     }
 }
 
+export const getUserTickets = async() => {
+    try {
+        const {data} = await $authHost.get('ticket');
+        return data;
+    } catch (error) {
+        return error.response.data;
+    }
+}
+
 export const getTicketId = async(value) => {
     try {
         const {data} = await $authHost.get(`ticket/getId?concertId=${value.concertId}&seat=${value.seat}&row=${value.row}&floor=${value.floor}`);
         return data.id;
     } catch (error) {
-        console.log(error.response.data)
         return error.response.data;
     }
 }
@@ -40,7 +48,6 @@ export const getTicketPrice = async (id) => {
 
 export const deleteTicket = async(id) =>{
     try {
-        console.log(id);
         const {data} = await $authHost.delete(`ticket/${id}`)
         return data;
     } catch (error) {

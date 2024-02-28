@@ -122,8 +122,6 @@ const HallDramteatr = observer(() => {
           user.userTickets = tickets;
           user.ticketsToBook = [...user.ticketsToBook, ticket];
       };
-      console.table(ticket);
-      console.log(user.ticketsToBook, user.userTickets);
       return;
     } else return;   
   };

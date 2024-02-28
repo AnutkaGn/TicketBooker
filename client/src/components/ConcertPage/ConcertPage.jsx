@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import './concertPage.css'
 import Header from '../common/Header/Header';
 import AboutConcert from './AboutConcert/AboutConcert';
@@ -10,17 +10,30 @@ import HallFilarmoniya from '../HallFilarmoniya/HallFilarmoniya';
 import PriceForConcert from './PriceForConcert/PriceForConcert';
 import HallDramteatr from '../HallDramteatr/HallDramteatr';
 import HallDruzhbaNarodiv from '../HallDruzhbaNarodiv/HallDruzhbaNarodiv';
+import TicketsPriceSum from './TicketsPriceSum/TicketsPriceSum';
+import { getUserTickets } from '../../http/ticketAPI'
+
 
 const ConcertPage = observer(() => {
     const {user} = useContext(Context);
     const {id} = useParams();
+    const [priceTickets, setPriceTickets] = useState([]);
     useEffect(() => {
         const fetchAboutConcert = async () =>{
             const data = await getAboutConcert(id);
             user.aboutConcert = data;
         }
         fetchAboutConcert();
+
     }, [])
+    useEffect(() => {
+        const fetchTickets = async () =>{
+            const response = await getUserTickets();
+            setPriceTickets(response.userTickets.filter(ticket => !ticket.booked && ticket.concertId == id));
+        }
+        fetchTickets();   
+    }, [user.userTickets]);
+    
     if (!Object.values(user.aboutConcert).length) return(<p>Завантаження...</p>)
     else return (
         <div className='wrapper-concert-page'>
@@ -34,15 +47,8 @@ const ConcertPage = observer(() => {
                 {user.aboutConcert.venue ==='DruzhbaNarodiv' ? <HallDruzhbaNarodiv /> : null}
                 <PriceForConcert/>
             </div>
-            
-            {user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length ? (
-                <div className='wrapper-add-to-basket'>
-                    <button className='add-to-basket__button'>Перейти до корзини</button>
-                    <div className='add-to-basket__footer'>
-                        <p>{`Сума (${user.ticketsToBook.filter(ticket => !ticket.booked && ticket.concertId === id).length}шт.): ${user.ticketsToBook.reduce((sum, ticket) => !ticket.booked && ticket.concertId === id ? Number(sum) + Number(ticket.price): 0, 0)} грн`}</p>
-                    </div>
-                </div>
-            ):(<></>)}
+            { priceTickets.length != 0 && <TicketsPriceSum priceTickets = {priceTickets}/>}
+           
         </div>
     );
 });
