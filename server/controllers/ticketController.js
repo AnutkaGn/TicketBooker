@@ -1,7 +1,7 @@
 // getTickets, getTicketsById, createTicket, bookTicket, bookManyTickets, deleteTicket, deleteNotBookedTicket
 const ApiError = require('../error/ApiError');
 const Ticket = require('../schemas/ticketSchema');
-const User = require('../schemas/userSchema');
+
 
 const getTickets = async (req, res, next) =>{
     try{
@@ -91,10 +91,8 @@ const bookManyTickets = async (req, res) =>{
 const deleteTicket = async (req, res) =>{
     try{
         const { id } = req.params;
-        const result = await Ticket.findByIdAndDelete(id);
-        const user = req.user;
-        const { tickets } = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
-        return res.status(200).json({tickets});
+        const deletedTicket = await Ticket.findByIdAndDelete(id);
+        return res.status(200).json({deletedTicket});
     }
     catch (error){
         console.error(error);

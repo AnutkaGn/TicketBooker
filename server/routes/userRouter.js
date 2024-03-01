@@ -12,6 +12,6 @@ router.get('/', authMiddleware, userController.check);
 // Add tickets to the array of user tickets (basket)
 router.post('/add', authMiddleware, userController.addToTickets);
 // Delete tickets from the array of user tickets (basket)
-router.delete('/', authMiddleware, userController.deleteFromTickets);
+//router.delete('/', authMiddleware, userController.deleteFromTickets);
 
 module.exports = router;

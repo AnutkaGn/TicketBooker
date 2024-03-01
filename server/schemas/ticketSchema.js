@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const User = require('./userSchema');
 const { Schema } = mongoose;
 
 const ticketSchema = new Schema({
@@ -28,6 +29,12 @@ const ticketSchema = new Schema({
         default: false
     }
 });
+
+ticketSchema.post('findOneAndDelete', async (doc) => {
+    const ticketId = doc._id;
+    // Оновлення всіх users, які мають цей ticket у своєму масиві tickets
+    await User.updateMany({ tickets: {$in: [ticketId]} }, { $pull: { tickets: ticketId } });
+  });
 
 const Ticket = mongoose.model("Ticket", ticketSchema);
 module.exports = Ticket;

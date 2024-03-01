@@ -69,25 +69,25 @@ const addToTickets = async(req, res) =>{
     }
 };
 
-const deleteFromTickets = async(req, res) =>{
-    try{
-        const { id } = req.body;
-        const user = req.user;
-        const updatedUser = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
-        const token = generateToken(updatedUser);
-        return res.status(200).json({ token });
-    }
-    catch (error){
-        console.error(error);
-        return res.status(500);
-    }
-};
+// const deleteFromTickets = async(req, res) =>{
+//     try{
+//         const { id } = req.body;
+//         const user = req.user;
+//         const updatedUser = await User.findOneAndUpdate({login: user.login}, {$pull: {tickets: id}}, {new: true});
+//         const token = generateToken(updatedUser);
+//         console.log(updatedUser)
+//         return res.status(200).json({ token,  updatedUser});
+//     }
+//     catch (error){
+//         console.error(error);
+//         return res.status(500);
+//     }
+// };
  
 module.exports={
     signUpUser, 
     logInUser, 
     check,
-    addToTickets, 
-    deleteFromTickets
+    addToTickets
 }
 

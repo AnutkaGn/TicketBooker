@@ -11,7 +11,7 @@ import PriceForConcert from './PriceForConcert/PriceForConcert';
 import HallDramteatr from '../HallDramteatr/HallDramteatr';
 import HallDruzhbaNarodiv from '../HallDruzhbaNarodiv/HallDruzhbaNarodiv';
 import TicketsPriceSum from './TicketsPriceSum/TicketsPriceSum';
-import { getUserTickets } from '../../http/ticketAPI'
+import { getUserTickets } from '../../http/ticketAPI';
 
 
 const ConcertPage = observer(() => {

@@ -41,6 +41,7 @@ export const addToTickets = async (id) => {
 
 export const deleteFromTickets = async (id) => {
     const {data} = await $authHost.delete('user/', { id });
+    console.log(jwtDecode(data.token))
     localStorage.setItem('token', data.token);
     return jwtDecode(data.token)
 }

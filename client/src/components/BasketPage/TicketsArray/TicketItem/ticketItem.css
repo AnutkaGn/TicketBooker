@@ -15,6 +15,7 @@
     width: 35px;
     height: 35px;
     margin-right: 70px;
+    cursor: pointer;
 }
 .basket-item__main-information{
     display: flex;
