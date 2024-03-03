@@ -1,7 +1,7 @@
 // getTickets, getTicketsById, createTicket, bookTicket, bookManyTickets, deleteTicket, deleteNotBookedTicket
 const ApiError = require('../error/ApiError');
 const Ticket = require('../schemas/ticketSchema');
-
+const mongoose = require('mongoose')
 
 const getTickets = async (req, res, next) =>{
     try{
@@ -79,7 +79,10 @@ const bookTicket = async (req, res, next) =>{
 const bookManyTickets = async (req, res) =>{
     try{
         const {idArray} = req.query;
-        const tickets = await Ticket.updateMany({_id:{$in:idArray}}, {booked: true}, {new: true});
+        console.log(idArray)
+        const ids = idArray.split(',').map(id => mongoose.Types.ObjectId(id.trim()));
+        const tickets = await Ticket.updateMany({_id:{$in:ids}}, {booked: true}, {new: true});
+        console.log(tickets)
         return res.status(200).json({tickets})
     }
     catch (error){

@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { Context } from '../../../..';
 import { getAboutConcert } from '../../../../http/concertAPI';
 import { deleteTicket } from '../../../../http/ticketAPI';
-import { check, deleteFromTickets } from '../../../../http/userAPI';
+import { check } from '../../../../http/userAPI';
 
 const TicketItem = observer(({ticket, func}) => {
     const {user} = useContext(Context);
@@ -22,7 +22,7 @@ const TicketItem = observer(({ticket, func}) => {
             user.role = role;
             user.userTickets = tickets;
             if (message) console.log(message);
-          }
+        }
 
         fetchConcert();
         checkUser(); 
@@ -30,8 +30,6 @@ const TicketItem = observer(({ticket, func}) => {
     }, []);
     const deleteFromBasket = async(id) => {
         const dataTicket = await deleteTicket(id);
-        console.log(id)
-        console.log(dataTicket);
         func(prev => prev.filter(ticket => JSON.stringify(ticket) !== JSON.stringify(dataTicket.deletedTicket)));
     }
     
