@@ -14,6 +14,7 @@ const TicketsArray = () => {
         }
         fetchTickets();
     }, []);
+    
     const bookTickets = async(tickets) => {
         await bookManyTickets(tickets);
         setSelectedTickets(prev => prev.filter(ticket => !tickets.includes(ticket._id))) 

@@ -8,9 +8,7 @@ const UserPage = () => {
         <div className='wrapper-user-page'>
             <Header/>
             <div style={{marginTop:'100px'}}></div>
-            <p className='user-page__text'>Ваші заброньовані квиточки чекають вас!</p>
             <UserTicketsArray/>
-            <p className='user-page__text'>Спогади! Ви відвідували ці заходи</p>
         </div>
     );
 }
