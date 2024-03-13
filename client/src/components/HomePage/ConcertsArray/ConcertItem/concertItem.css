@@ -1,90 +1,107 @@
 .concert-card{
     display: flex;
+    position: relative;
     flex-direction: row;
-    align-items: center;
     margin-bottom: 45px;
     width: 1008px;
-    height: 230px;
+    height: 292px;
     background-color: #FDF9F6;
-    border-radius: 10px;
-    border: 1px solid #B4ADA9;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
 }
-.concert-card__date{
+
+.concert-card__poster{
     display: flex;
-    flex-direction: column;
-    margin: 0 29px;
-    color: #000;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 400;
+    position: relative;
+    margin-left: 55px;
+    margin-top: 40px;
 }
-.concert-card > img{
-    width: 180px;
-    height: 230px;
+.concert-card__poster > img{
+    width: 150px;
+    height: 209px;
+    transform: rotate(9deg);
+}
+.background-of-picture{
+    position: absolute;
+    width: 128px;
+    height: 177px;
+    background-color: #2B2A2A;
+    opacity: 78%;
+    transform: rotate(22deg);
+    left: 72px;
+    top:30px;
 }
 .concert-wrapper-information{
+    position: relative;
     display: flex;
     flex-direction: column;
-    width: 520px;
-    margin-left: 30px;
+    width: 350px;
+    margin-left: 120px;
 }
 .concert-card__name{
     color: #000;
-    font-family: "Roboto Slab";
-    font-size: 22px;
+    font-family: 'Vinnytsia Sans';
+    font-size: 20px;
     font-weight: 700;
+    margin-top: 40px;
 }
 .concert-card__type{
-    color: #000;
-    font-size: 13px;
-    margin-top: -20px;
+    color: #FFB800;
+    font-family: 'Vinnytsia Sans';
+    font-size: 16px;
+    margin-top: -10px;
 }
-.concert-wrapper-venue{
+.concert-wrapper-venue-date{
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    margin-top: 48px;
 }
-.concert-wrapper-venue > img{
-    width: 25px;
-    height: 25px;
+.concert-card__date{
+    color: #000;
+    font-family: "Golca Light";
+    font-size: 16px;
+    font-weight: 400;
 }
 .concert-card__venue{
     color: #000;
-    font-size: 18px;
-    font-weight: 500;
-    margin-left: 8px;
-}
-.concert-wrapper-price-and-button{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 520px;
-    justify-content: space-between;
+    font-size: 16px;
+    font-family: "Golca Light";
+    font-weight: 400;
+    margin-top: 8px;
+    margin-bottom: 0px;
 }
 .concert-wrapper-price{
     display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-.concert-wrapper-price > img{
-    width: 25px;
-    height: 25px;
+    width: 520px;
+    margin-left: 15px;
 }
 .concert-card__price{
-    color: #000;
-    font-size: 18px;
-    font-weight: 600;
-    margin-left: 8px;
+    font-family: 'Vinnytsia Sans';
+    color: #4C382C;
+    font-size: 24px;
+    font-weight: 700;
+
 }
 .concert-card__button-book{
-    border-radius: 10px;
-    width: 180px;
-    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    width: 219px;
+    height: 292px;
     border: none;
-    background: #4C382C;
-    color: #FFF;
-    font-size: 20px;
-    font-weight: 400;
+    background: #FFB800;
     cursor: pointer;
+    text-decoration: none;
+}
+.concert-card__button-book > span{
+    text-decoration: none;
+    font-family: 'Vinnytsia Sans';
+    color: #FFF;
+    font-weight: 700;
+    font-size: 48px;
+}
+.concert-arrow{
+    position: absolute;
+    transform: translateY(55%);
+    right: 270px;
 }
