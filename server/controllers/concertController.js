@@ -38,8 +38,9 @@ const getOneConcertById = async(req, res, next) =>{
 
 const createConcert = async(req, res) =>{
     try{
-        const { name, description, type, image, price, venue, dateTime } = req.body;
-        const concert = await Concert.create({ name, description, type, image, price, venue, dateTime });
+        const { name, description, type, price, venue, dateTime } = req.body;
+        const {mimetype, buffer} = req.file;
+        const concert = await Concert.create({ name, description, type, image: {mimetype, buffer}, price, venue, dateTime });
         return res.status(200).json({concert})
     }
     catch (error){

@@ -15,8 +15,8 @@ const concertSchema = new Schema({
         required: true
     },
     image:{
-        type: String,
-        required: true
+        mimetype: {type: String, required: true},
+        buffer: {type: mongoose.Schema.Types.Buffer, required: true}
     },
     price:{
         type: Array,

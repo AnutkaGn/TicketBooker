@@ -5,14 +5,26 @@ import './concertItem.css';
 import { Link } from 'react-router-dom';
 
 
+
+function _arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+
 const ConcertItem = ({concert}) => {
-    const formattedDate = moment(concert.dateTime).locale('uk').format('D MMMM HH:mm');
-    const dateParts = formattedDate.split(' ');
+
+    
+    console.log(JSON.stringify(concert.image.buffer?.data))
     return (
         <div className='concert-card'>
             <div className='concert-card__poster'>
                 <div className='background-of-picture'></div>
-                <img src="assets/poster.png" alt="poster"/>
+                <img src={`data:${concert.image.mimetype};base64,${_arrayBufferToBase64(concert.image.buffer?.data)}`} alt="poster"/>
             </div>
             
             <div className='concert-wrapper-information'>
