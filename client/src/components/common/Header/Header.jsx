@@ -1,5 +1,6 @@
 import React from 'react';
 import './header.css'
+import Drawer from './Drawer/Drawer';
 
 const Header = ({isAuth}) => {
     let style = {};
@@ -8,7 +9,7 @@ const Header = ({isAuth}) => {
     }
     return (
         <div className='header' style={style}>
-            {!isAuth && <a href="/"><img className='header__button' src="assets/button.svg" alt="button"/></a>}
+            {!isAuth && <Drawer/>}
             <div className='header__box-logo-text'>            
                 <a href="/"><img className='header__logo' src="assets/logo.png" alt="logo"/></a>
                 <a href="/"><p className='header__text'>Ticket.che</p></a>

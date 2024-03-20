@@ -19,3 +19,15 @@ export const floorLocalization = {
     'baignoire1': 'Бенуар 1',
     'baignoire2': 'Бенуар 2',
 }
+export const typeConcert = {
+    'concert' : 'концерт',
+    'comedy' : 'комедія',
+    'show' : 'шоу',
+    'theatre' : 'театр',
+    'kids' : 'дітям',
+}
+export const venueConcert = {
+    'DruzhbaNarodiv' : {'venue': 'ПК «Дружба народів»', 'address': 'Черкаси, бульвар Шевченка, 249'},
+    'Filarmoniya' : {'venue': 'Черкаська обласна філармонія', 'address':  'Черкаси, вулиця Хрещатик, 196'},
+    'Dramteatr' : {'venue': 'Український музично-драматичний театр імені Т. Г. Шевченка', 'address': 'Черкаси, бульвар Шевченка, 234'},
+}

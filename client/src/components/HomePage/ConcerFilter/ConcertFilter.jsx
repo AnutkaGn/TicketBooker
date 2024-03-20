@@ -19,19 +19,17 @@ const ConcertFilter = observer(() => {
 	const [theatreType, setTheatreType] = useState(false);
 	const [kidsType, setKidsType] = useState(false);
 	const [venue, setVenue] = useState('');
-	const [date, setDate] = useState("");
+	const [date, setDate] = useState('');
 
 	const options = [
-		{ value: "druzhbaNarodiv", label: 'ПК «Дружба народів»'},
-		{ value: "filarmoniya", label: 'Черкаська обласна філармонія'},
-		{ value: "dramteatr", label: 'Український музично-драматичний театр імені Т. Г. Шевченка'},
-	]
-
-	
+		{ value: "DruzhbaNarodiv", label: 'ПК «Дружба народів»'},
+		{ value: "Filarmoniya", label: 'Черкаська обласна філармонія'},
+		{ value: "Dramteatr", label: 'Український музично-драматичний театр імені Т. Г. Шевченка'},
+	]	
 	useEffect(() => {
 		let typesArray = [];
 		if (concertType) typesArray.push('concert');
-		if (comedyType) typesArray.push('Comedy');
+		if (comedyType) typesArray.push('comedy');
 		if (showType) typesArray.push('show');
 		if (theatreType) typesArray.push('theatre');
 		if (kidsType) typesArray.push('kids');
@@ -72,7 +70,7 @@ const ConcertFilter = observer(() => {
 				<div>
 					<Select
 						getValue={() => venue}
-						onChange={value => setVenue(value?.label)}
+						onChange={value => setVenue(value?.value)}
 						options={options}
 						isClearable={true}
 						placeholder='Виберіть місце проведення'
@@ -92,12 +90,10 @@ const ConcertFilter = observer(() => {
 						control: (base, state) => ({
 							...base,
 							fontFamily: "Vinnytsia Sans",
-							
 							fontSize: '16px',
 							height: "50px",
 							border: "none",
 							borderColor: state.isFocused ? "#4C382C" : null,
-
 						})
 						}}
 					/>
@@ -108,8 +104,7 @@ const ConcertFilter = observer(() => {
 							components: {
 								DatePicker: {
 									activeBorderColor: "red",
-									hoverBorderColor: "red"
-	
+									hoverBorderColor: "red",
 								},
 							},
 							token: {
@@ -129,7 +124,7 @@ const ConcertFilter = observer(() => {
 							placeholder='Обери дату'
 							locale={locale}
 							minDate={dayjs()}
-							onChange={(value) => setDate(new Date(value.$d))}
+							onChange={(value) => value? setDate(new Date(value.$d)): setDate("")}
 						/>
 					</ConfigProvider>
 				</div>

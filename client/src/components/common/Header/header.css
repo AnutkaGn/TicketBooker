@@ -13,6 +13,7 @@
     width: 30px;
     height: 30px;
     margin-left: 40px;
+    cursor: pointer;
 }
 .header__box-logo-text{
     display: flex;

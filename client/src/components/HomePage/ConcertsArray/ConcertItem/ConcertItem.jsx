@@ -3,6 +3,7 @@ import moment from 'moment';
 import 'moment/locale/uk';
 import './concertItem.css';
 import { Link } from 'react-router-dom';
+import {typeConcert, venueConcert} from '../../../../consts';
 
 
 
@@ -17,22 +18,21 @@ function _arrayBufferToBase64( buffer ) {
 }
 
 const ConcertItem = ({concert}) => {
-
-    
-    console.log(JSON.stringify(concert.image.buffer?.data))
+    console.log(venueConcert[concert.venue])
+    const venue = venueConcert[concert.venue]?.address
+    const type = typeConcert[concert.type]
     return (
         <div className='concert-card'>
             <div className='concert-card__poster'>
                 <div className='background-of-picture'></div>
                 <img src={`data:${concert.image.mimetype};base64,${_arrayBufferToBase64(concert.image.buffer?.data)}`} alt="poster"/>
             </div>
-            
             <div className='concert-wrapper-information'>
                 <p className='concert-card__name'>{concert.name}</p>
-                <p className='concert-card__type'>{concert.type}</p>
+                <p className='concert-card__type'>{type}</p>
                 <div className='concert-wrapper-venue-date'>
                     <div className='concert-card__date'><span>{moment(concert.dateTime).locale('uk').format('D MMMM HH:mm')}</span></div>
-                    <p className='concert-card__venue'>{concert.venue}</p>
+                    <p className='concert-card__venue'>{venue}</p>
                 </div>
                 <div className='concert-wrapper-price'>
                     <p className='concert-card__price'>{concert.price[0]} - {concert.price[7]} грн</p> 

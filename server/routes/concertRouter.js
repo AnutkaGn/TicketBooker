@@ -11,7 +11,7 @@ router.get('/', concertController.getConcerts);
 //Get concert by Id
 router.get('/:id', concertController.getOneConcertById);
 //Create new concert
-router.post('/', authMiddleware, checkRoleMiddleware, upload.single("image"), concertController.createConcert);
+router.post('/', upload.single("image"), concertController.createConcert);
 //Delete concert
 router.delete('/:id', authMiddleware, checkRoleMiddleware, concertController.deleteConcert);
 

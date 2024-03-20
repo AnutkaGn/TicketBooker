@@ -52,7 +52,7 @@
 .concert-wrapper-venue-date{
     display: flex;
     flex-direction: column;
-    margin-top: 48px;
+    margin-top: 15px;
 }
 .concert-card__date{
     color: #000;
@@ -71,7 +71,8 @@
 .concert-wrapper-price{
     display: flex;
     width: 520px;
-    margin-left: 15px;
+    margin-left: 20px;
+    margin-top: 24px;
 }
 .concert-card__price{
     font-family: 'Vinnytsia Sans';
@@ -102,6 +103,6 @@
 }
 .concert-arrow{
     position: absolute;
-    transform: translateY(55%);
-    right: 270px;
+    transform: translateY(60%);
+    right: 255px;
 }
