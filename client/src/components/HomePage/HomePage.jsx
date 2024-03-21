@@ -9,7 +9,6 @@ const HomePage = () => {
     return (
         <div>
             <Header/>
-            <div style={{height:'100px'}}></div>
             <Slider/>
             <ConcertFilter/>
             <ConcertsArray/>

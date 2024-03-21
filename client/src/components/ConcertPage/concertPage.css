@@ -4,6 +4,10 @@
     width: 100%;
 }
 .concert-line{
-    margin-top: 50px;
+    margin-top: 20px;
+    height: 2px;
+    background-color: #FFB800;
     width: 85%;
+    border: none;
+    align-self: center;
 }

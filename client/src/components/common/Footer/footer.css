@@ -4,6 +4,7 @@
     background-color: #77685F;
     flex-shrink: 0;
     padding-top: 15px;
+    margin-top: 40px;
 }
 .footer__email{
     display: flex;

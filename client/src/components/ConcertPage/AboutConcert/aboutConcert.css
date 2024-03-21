@@ -3,12 +3,13 @@
     flex-direction: row;
     width: 1100px;
     height: auto;
-    justify-self: center;
+    justify-content: center;
     align-self: center;
 }
 .about-concert > img{
     width: 240px;
     height: 310px;
+    margin-top: 40px;
 }
 .about-concert__wrapper-information{
     display: flex;
@@ -21,49 +22,47 @@
     font-size: 18px;
     font-weight: 400;
     margin-top: 0;
+    font-family: "Golca";
 }
 .about-concert__name{
     color: #000;
-    font-family: "Roboto Slab";
+    font-family: 'Vinnytsia Sans';
     font-size: 20px;
     font-weight: 700;
     margin-top: 0;
 }
+.about-concert__type{
+    color: #FFB800;
+    font-family: 'Vinnytsia Sans';
+    font-size: 16px;
+    margin-top: -10px;
+}
 .about-concert__description{
     color: #000;
+    font-family: "Golca Light";
     font-size: 17px;
     font-weight: 400;
     margin-top: 0;
 }
 .about-concert__wrapper-venue{
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
     margin-top: 0;
-}
-.about-concert__wrapper-venue > img{
-    width: 25px;
-    height: 25px;
 }
 .about-concert__wrapper-venue > p{
     color: #000;
     font-size: 17px;
     font-weight: 500;
-    margin-left: 8px;
+    font-family: "Golca";
+    margin-top: 0;
 }
 .about-concert__wrapper-price{
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-top: 0; 
-}
-.about-concert__wrapper-price > img{
-    width: 25px;
-    height: 25px;
+    margin-top: -15px; 
 }
 .about-concert__wrapper-price > p{
-    color: #000;
-    font-size: 17px;
-    font-weight: 500;
-    margin-left: 8px;
+    font-family: 'Vinnytsia Sans';
+    color: #4C382C;
+    font-size: 24px;
+    font-weight: 700;
 }

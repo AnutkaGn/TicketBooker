@@ -14,6 +14,8 @@ import TicketsPriceSum from './TicketsPriceSum/TicketsPriceSum';
 import { getUserTickets } from '../../http/ticketAPI';
 
 
+
+
 const ConcertPage = observer(() => {
     const {user} = useContext(Context);
     const {id} = useParams();
@@ -29,7 +31,7 @@ const ConcertPage = observer(() => {
     useEffect(() => {
         const fetchTickets = async () =>{
             const response = await getUserTickets();
-            setPriceTickets(response.userTickets.filter(ticket => !ticket.booked && ticket.concertId == id));
+            if(response.length) setPriceTickets(response.userTickets.filter(ticket => !ticket.booked && ticket.concertId == id));
         }
         fetchTickets();   
     }, [user.userTickets]);
@@ -40,7 +42,7 @@ const ConcertPage = observer(() => {
             <Header/>
             <div style={{height: '110px'}}></div>
             <AboutConcert/>
-            <hr className='concert-line'/>
+            <div className='concert-line'></div>
             <div style={{display:'flex', flexDirection:'row'}}>
                 {user.aboutConcert.venue === 'Filarmoniya' ? <HallFilarmoniya /> : null}
                 {user.aboutConcert.venue === 'Dramteatr' ? <HallDramteatr /> : null}

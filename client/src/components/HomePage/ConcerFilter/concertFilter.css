@@ -3,7 +3,7 @@
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 45px;
 }
 .filter__checkbox{
     display: flex;

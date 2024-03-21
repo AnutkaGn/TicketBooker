@@ -18,7 +18,6 @@ function _arrayBufferToBase64( buffer ) {
 }
 
 const ConcertItem = ({concert}) => {
-    console.log(venueConcert[concert.venue])
     const venue = venueConcert[concert.venue]?.address
     const type = typeConcert[concert.type]
     return (
