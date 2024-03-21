@@ -6,24 +6,26 @@
     height: 100%;
 }
 .signUp{
+    margin-top: 120px;
     display: flex;
     flex-direction: column;
     align-self: center;
     justify-content: space-between;
     align-items: center;
-    width: 450px;
+    width: 380px;
     height: auto; 
     background-color: #FDF9F6;
-    border-radius: 10px;
-    border: 1px solid #B4ADA9;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+}
+.signUp input:focus{
+    outline: #4C382C;
 }
 .signUp__name-block{
     color: #000;
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 600;
-    margin-top: 40px;
+    margin-top: 50px;
     margin-bottom: 5px;
+    font-family: 'Vinnytsia Sans';
 }
 .signUp__box-for-information{
     display: flex;
@@ -31,39 +33,52 @@
     margin-top: 20px;
 }
 .signUp__box-for-information > input{
-    width: 290px;
+    width: 250px;
     height: 40px;
-    font-size: 16px;
-    border-radius: 10px;
+    font-size: 12px;
     border: 1px solid #B4ADA9;
     padding: 0 10px;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
 }
 .signUp__box-for-information > label{
     color: #000;
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 500;
+    font-family: 'Vinnytsia Sans';
+    margin-bottom: 10px;
 
 }
 .signUp-button{
     width: 190px;
-    height: 45px;
-    border-radius: 10px;
-    background: #4C382C;
+    height: 37px;
+    background: #FFB800;
     color: #FFF;
-    font-size: 23px;
+    border: none;
+    font-size: 20px;
+    font-family: 'Vinnytsia Sans';
+    font-weight: 400;
+    padding-top: 4px;
+}
+.signUp-button:hover{
+    background: #ffc636;
+}
+.signUp-button:active{
+    background: #e6a500
 }
 .signUp__box-logIn{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    margin: 20px 0;
+    margin: 15px 0 20px 0;
 }
 .signUp__box-logIn > p{
     color: #000;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 500;
-    margin-right: 15px;
+    font-family: 'Vinnytsia Sans';
 }
-
-
+.signUp-logIn-button:hover{
+    color:#FFB800
+}
+.signUp-logIn-button:active{
+    color:#e6a500
+}

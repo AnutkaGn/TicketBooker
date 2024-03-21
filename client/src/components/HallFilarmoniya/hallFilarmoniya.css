@@ -3,6 +3,8 @@
     overflow: hidden;
     height: 800px;
     width: 100%;
+    display: flex;
+    justify-content: center;
 }
 .wrapper-svg-filarmoniya > svg{
     position: absolute;

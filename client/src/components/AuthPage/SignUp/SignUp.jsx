@@ -49,28 +49,28 @@ const SignUp = observer(() => {
     return (
         <div className="wrapper-signUp"> 
             <div className='signUp'>
-                <p className='signUp__name-block'>Sign Up</p>
+                <p className='signUp__name-block'>Зареєструватися</p>
                 <div className='signUp__box-for-information'>
-                    <label htmlFor="password">Email</label>
+                    <label htmlFor="password">Електронна пошта</label>
                     <input ref={emailRef} onChange={() => checkEmail()} id='password' type="email" placeholder='Введіть електронну пошту'/>
-                    {!isValidEmail && <span style={{color: 'red', fontSize: '14px', marginTop: '3px', width: "300px"}} >Неправильна електронна адреса</span>}
+                    {!isValidEmail && <span style={{color: 'red', fontSize: '10px', marginTop: '3px', width: "270px"}} >Неправильна електронна адреса</span>}
                 </div>
                 <div className='signUp__box-for-information'>
-                    <label htmlFor="username">Username</label>
+                    <label htmlFor="username">Ім'я користувача</label>
                     <input ref={loginRef} id='username' type="text" placeholder='Введіть своє і&apos;мя' />
                 </div>
                 <div className='signUp__box-for-information'>
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="password">Пароль</label>
                     <input ref={passwordRef} onChange={() => checkPassword()} id='password' type="password" placeholder='Введіть пароль'/>
-                    {!isValidPassword && <span style={{color: 'red', fontSize: '14px', marginTop: '3px', width: "300px"}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
+                    {!isValidPassword && <span style={{color: 'red', fontSize: '10px', marginTop: '3px', width: "270px"}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
                 </div>
-                <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: '40px'}}>
-                    {error && <span style={{color: 'red', fontSize: '16px', marginBottom: '30px'}}>{error}</span>}
-                    <button onClick={() => handleClick()} className='signUp-button'>Sign Up</button>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: '30px'}}>
+                    {error && <span style={{color: 'red', fontSize: '10px', marginBottom: '20px'}}>{error}</span>}
+                    <button onClick={() => handleClick()} className='signUp-button'>Зареєструватися</button>
                 </div>
                 <div className='signUp__box-logIn'>
-                    <p>Do you have an account?</p>
-                    <p style={{textDecoration: 'underline', fontSize: '20px', cursor: 'pointer'}} onClick={() => user.isLogin = true}>Log In</p>
+                    <p>Вже маєте обліковий запис?</p>
+                    <p className='signUp-logIn-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop:'-4px'}} onClick={() => user.isLogin = true}>Увійти    </p>
                 </div>
             </div>
         </div>

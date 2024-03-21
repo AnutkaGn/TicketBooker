@@ -4,9 +4,8 @@
     width: 1008px;
     height: auto;
     background-color: #FDF9F6;
-    border-radius: 10px;
-    border: 1px solid #B4ADA9;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+    margin-top: 120px;
+    padding-top: 15px;
 }
 .basket-tickets__box-button-price{
     display: flex;
@@ -15,21 +14,22 @@
     align-items: center;
     margin: 20px 0;
 }
-.basket-tickets__box-button-price > a > input{
-    border-radius: 10px;
+.basket-tickets__box-button-price > input{
     width: 180px;
     height: 40px;
     border: none;
-    background: #4C382C;
+    background: #FFB800;
     color: #FFF;
     font-size: 20px;
     font-weight: 400;
+    font-family: 'Vinnytsia Sans';
     margin-left: 30px;
+    cursor: pointer;
 }
 .basket-tickets__box-button-price > p{
-    color: #000;
-    font-family: "Roboto Slab";
-    font-size: 20px;
-    font-weight: 600;
+    font-family: 'Vinnytsia Sans';
+    color: #4C382C;
+    font-size: 24px;
+    font-weight: 700;
 }
 

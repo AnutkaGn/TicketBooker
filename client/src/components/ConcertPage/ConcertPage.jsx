@@ -44,10 +44,11 @@ const ConcertPage = observer(() => {
             <AboutConcert/>
             <div className='concert-line'></div>
             <div style={{display:'flex', flexDirection:'row'}}>
+                <PriceForConcert/>
                 {user.aboutConcert.venue === 'Filarmoniya' ? <HallFilarmoniya /> : null}
                 {user.aboutConcert.venue === 'Dramteatr' ? <HallDramteatr /> : null}
                 {user.aboutConcert.venue ==='DruzhbaNarodiv' ? <HallDruzhbaNarodiv /> : null}
-                <PriceForConcert/>
+                
             </div>
             { priceTickets.length != 0 && <TicketsPriceSum priceTickets = {priceTickets}/>}
            

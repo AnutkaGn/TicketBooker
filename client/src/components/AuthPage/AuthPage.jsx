@@ -9,7 +9,7 @@ const AuthPage = observer(() => {
     const {user} = useContext(Context);
 
     return (
-        <div style={{height: '100%'}}>
+        <div>
             <Header isAuth={true}/>
             {user.isLogin ? <LogIn /> : <SignUp />}
         </div>

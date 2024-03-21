@@ -41,24 +41,24 @@ const LogIn = observer(() => {
     return (
         <div className="wrapper-logIn"> 
             <div className='logIn'>
-                <p className='logIn__name-block'>Log In</p>
-                <p className='logIn__text'>Log in here username and password</p>
+                <p className='logIn__name-block'>Авторизуватися </p>
+                <p className='logIn__text'></p>
                 <div className='logIn__box-for-information'>
-                    <label htmlFor="username">Username</label>
+                    <label htmlFor="username">Ім'я користувача</label>
                     <input ref={loginRef} id='username' type="text" placeholder='Введіть своє і&apos;мя' />
                 </div>
                 <div className='logIn__box-for-information'>
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="password">Пароль</label>
                     <input onChange={() => checkPassword()} ref={passwordRef} id='password' type="password" placeholder='Введіть пароль'/>
-                    {!isValid && <span style={{color: 'red', fontSize: '14px', marginTop: '3px', width: "300px"}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
+                    {!isValid && <span style={{color: 'red', fontSize: '10px', marginTop: '3px', width: "270px", alignSelf: 'center'}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
                 </div>
                 <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: '40px'}}>
-                    {error && <span style={{color: 'red', fontSize: '16px', marginBottom: '30px'}}>{error}</span>}
-                    <button onClick={() => handleClick()} className='logIn-button'>Log In</button>
+                    {error && <span style={{color: 'red', fontSize: '10px', marginBottom: '30px'}}>{error}</span>}
+                    <button onClick={() => handleClick()} className='logIn-button'>Увійти</button>
                 </div>
                 <div className='logIn__box-signUp'>
-                    <p>Don't have an account?</p>
-                    <p style={{textDecoration: 'underline', fontSize: '20px', cursor: 'pointer'}} onClick={() => user.isLogin = false}>Sign Up</p>
+                    <p>Немає облікового запису?</p>
+                    <p  className='logIn-signUp-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop: '-2px'}} onClick={() => user.isLogin = false}>Зареєструватися</p>
                 </div>
             </div>
         </div>

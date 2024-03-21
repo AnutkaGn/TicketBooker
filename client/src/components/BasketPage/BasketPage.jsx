@@ -7,7 +7,6 @@ const BasketPage = () => {
     return (
         <div className='wrapper-basket-page'>
             <Header/>
-            <div style={{height: "100px"}}></div>
             <TicketsArray/>
         </div>
     );
