@@ -1,13 +1,12 @@
-import React, {useContext, useRef, useEffect} from 'react';
-import './hallDruzhbaNarodiv.css'
+import React, {useRef, useEffect} from 'react';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../..';
 import { createTicket, getTickets, deleteTicket, getTicketId, getTicketPrice } from '../../http/ticketAPI';
 import { addToTickets } from '../../http/userAPI';
+import { store } from '../../store/UserStore';
 // import Tooltip from './Tooltip';
+import './hallDruzhbaNarodiv.css'
 
 const HallDruzhbaNarodiv = observer(() => {
-  const {user} = useContext(Context);
   // const [seat, setSeat] = useState('');
   // const [row, setRow] = useState('');
   // const [floor, setFloor] = useState('');
@@ -17,7 +16,7 @@ const HallDruzhbaNarodiv = observer(() => {
   // const [tooltipY, setTooltipY] = useState(0);
   const circleRef = useRef();
   // const wrapperRef = useRef();
-  const id = user.aboutConcert._id;
+  const id = store.aboutConcert._id;
   
   // Отримати заброньовані квитки
   // додати поле booked та reserved "true" та позначити ці місця сірим та червоним кольором
@@ -31,11 +30,11 @@ const HallDruzhbaNarodiv = observer(() => {
               circle.setAttribute('booked', true);
               circle.style.fill = '#a7a7a7';
             } 
-            else if (!user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+            else if (!store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
               circle.setAttribute('reserved', true);
               circle.style.fill = 'red';
             } 
-            else if (user.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+            else if (store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
               circle.style.fill = '#59ff00';
             }return null
           });
@@ -58,11 +57,11 @@ const HallDruzhbaNarodiv = observer(() => {
       };
 
       const ticketId = await getTicketId(ticket);
-      const concertPrices = user.aboutConcert.price;
+      const concertPrices = store.aboutConcert.price;
       if(!ticketId.message) {
         ticket._id = ticketId;
         //Перевірка чи є даний квиток в сховищі
-        if (user.includesTicketToBook(ticket) || user.includesTicketId(ticket._id)){
+        if (store.includesTicketToBook(ticket) || store.includesTicketId(ticket._id)){
           ticket.price = await getTicketPrice(ticket._id);
           switch(ticket.price){
             case concertPrices[7] : target.style.fill = 'rgb(156, 17, 66)'; //червоний
@@ -85,8 +84,8 @@ const HallDruzhbaNarodiv = observer(() => {
           
           //Видалити квиток з бази даних та оновити масив квитків у користувача
           const {tickets} = await deleteTicket(ticket._id);
-          user.userTickets = tickets;
-          user.deleteTicket(ticket);
+          store.userTickets = tickets;
+          store.deleteTicket(ticket);
         }
       }
       else {
@@ -119,8 +118,8 @@ const HallDruzhbaNarodiv = observer(() => {
           const {tickets} = await addToTickets(data.newTicket._id);
           //Додати квиток до сховища
           ticket._id = data.newTicket._id;
-          user.userTickets = tickets;
-          user.ticketsToBook = [...user.ticketsToBook, ticket];
+          store.userTickets = tickets;
+          store.ticketsToBook = [...store.ticketsToBook, ticket];
       };
       return;
     } else return;   

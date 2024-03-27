@@ -5,22 +5,21 @@ import BasketPage from './components/BasketPage/BasketPage';
 import ConcertPage from './components/ConcertPage/ConcertPage';
 import AuthPage from './components/AuthPage/AuthPage';
 import HallFilarmoniya from './components/HallFilarmoniya/HallFilarmoniya';
-import { Context } from "./index";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { observer } from 'mobx-react-lite';
 import { check } from './http/userAPI';
 import HallDruzhbaNarodiv from './components/HallDruzhbaNarodiv/HallDruzhbaNarodiv';
 import HallDramteatr from './components/HallDramteatr/HallDramteatr';
+import { store } from './store/UserStore';
 
 const App = observer(() => {
-  const { user } = useContext(Context);
   useEffect(() => {
     const checkUser = async() => {
       const {login, email, role, tickets, message} = await check();
-      user.login = login;
-      user.email = email;
-      user.role = role;
-      user.userTickets = tickets;
+      store.login = login;
+      store.email = email;
+      store.role = role;
+      store.userTickets = tickets;
       if (message) console.log(message);
     }
     checkUser();

@@ -1,11 +1,10 @@
-import React, { useContext } from 'react';
-import './priceForConcert.css'
+import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../../..';
+import { store } from '../../../store/UserStore';
+import './priceForConcert.css';
 
 const PriceForConcert = observer(() => {
-    const {user} = useContext(Context);
-    const price = user.aboutConcert.price;
+    const price = store.aboutConcert.price;
     return (
         <div className='wrapper-price-for-concert'>
             <div className='price-for-concert__box'>

@@ -1,15 +1,14 @@
-import React, { useContext, useEffect, useState } from 'react';
-import './ticketItem.css';
+import React, { useEffect, useState } from 'react';
 import moment from 'moment';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../../../..';
 import { getAboutConcert } from '../../../../http/concertAPI';
 import { deleteTicket } from '../../../../http/ticketAPI';
 import { check } from '../../../../http/userAPI';
 import { floorLocalization, venueConcert } from '../../../../consts';
+import { store } from '../../../../store/UserStore';
+import './ticketItem.css';
 
 const TicketItem = observer(({ticket, func}) => {
-    const {user} = useContext(Context);
     const [concert, setConcert] = useState('');
     useEffect(() => { 
         const fetchConcert = async () => {
@@ -18,10 +17,10 @@ const TicketItem = observer(({ticket, func}) => {
         }
         const checkUser = async() => {
             const {login, email, role, tickets, message} = await check();
-            user.login = login;
-            user.email = email;
-            user.role = role;
-            user.userTickets = tickets;
+            store.login = login;
+            store.email = email;
+            store.role = role;
+            store.userTickets = tickets;
             if (message) console.log(message);
         }
         fetchConcert();

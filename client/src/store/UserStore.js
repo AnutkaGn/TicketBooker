@@ -1,6 +1,6 @@
 import {makeAutoObservable} from 'mobx';
 
-export class UserStore{
+class UserStore{
     constructor(){
         this._concerts = [];
         this._aboutConcert = {};
@@ -73,3 +73,5 @@ export class UserStore{
         return JSON.parse(JSON.stringify(this._userTickets)).some(userTicket => id === userTicket)
     }
 };
+
+export const store = new UserStore();

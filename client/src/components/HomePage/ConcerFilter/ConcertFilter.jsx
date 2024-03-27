@@ -1,18 +1,17 @@
-import React, { useEffect, useContext, useState } from 'react';
-import './concertFilter.css'
+import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 import Checkbox from '@mui/material/Checkbox';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../../..';
 import { getConcerts } from '../../../http/concertAPI';
 import { DatePicker, ConfigProvider } from 'antd';
 import locale from 'antd/es/date-picker/locale/uk_UA';
-import 'dayjs/locale/uk';
+import { store } from '../../../store/UserStore';
 import dayjs from 'dayjs';
+import 'dayjs/locale/uk';
+import './concertFilter.css';
 
 
 const ConcertFilter = observer(() => {
-	const {user} = useContext(Context);
 	const [concertType, setConcertType] = useState(false);
 	const [comedyType, setComedyType] = useState(false);
 	const [showType, setShowType] = useState(false);
@@ -35,7 +34,7 @@ const ConcertFilter = observer(() => {
 		if (kidsType) typesArray.push('kids');
 		const fetchData = async () => {
 			const data = await getConcerts(typesArray, date, venue);
-			user.concerts = data;
+			store.concerts = data;
 		}
 		fetchData();
 	}, [concertType, comedyType, showType, theatreType, kidsType, venue, date]);

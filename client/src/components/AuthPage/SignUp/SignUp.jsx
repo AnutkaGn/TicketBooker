@@ -1,12 +1,11 @@
-import React, { useContext, useRef, useState } from 'react';
-import './signUp.css';
+import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Context } from '../../..';
 import { signUp } from '../../../http/userAPI';
 import { useNavigate } from 'react-router-dom';
+import { store } from '../../../store/UserStore';
+import './signUp.css';
 
 const SignUp = observer(() => {
-    const {user} = useContext(Context);
     const loginRef = useRef();
     const emailRef = useRef();
     const passwordRef = useRef();
@@ -35,10 +34,10 @@ const SignUp = observer(() => {
                     setError(message);
                     return;
                 }
-                user.login = login;
-                user.email = email;
-                user.role = role;
-                user.userTickets = tickets;
+                store.login = login;
+                store.email = email;
+                store.role = role;
+                store.userTickets = tickets;
                 navigate('/');
             } catch (error) {
                 console.error(error);
@@ -70,7 +69,7 @@ const SignUp = observer(() => {
                 </div>
                 <div className='signUp__box-logIn'>
                     <p>Вже маєте обліковий запис?</p>
-                    <p className='signUp-logIn-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop:'-4px'}} onClick={() => user.isLogin = true}>Увійти    </p>
+                    <p className='signUp-logIn-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop:'-4px'}} onClick={() => store.isLogin = true}>Увійти    </p>
                 </div>
             </div>
         </div>
