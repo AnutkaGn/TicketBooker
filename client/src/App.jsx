@@ -16,11 +16,15 @@ const App = observer(() => {
   useEffect(() => {
     const checkUser = async() => {
       const {login, email, role, tickets, message} = await check();
+      if (message) {
+        console.log(message);
+        return;
+      }
       store.login = login;
       store.email = email;
       store.role = role;
       store.userTickets = tickets;
-      if (message) console.log(message);
+      store.isLogin = true;
     }
     checkUser();
   }, []);

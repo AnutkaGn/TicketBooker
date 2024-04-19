@@ -11,7 +11,7 @@ import 'dayjs/locale/uk';
 import './concertFilter.css';
 
 
-const ConcertFilter = observer(() => {
+const ConcertFilter = observer(({page, setPage, setCount}) => {
 	const [concertType, setConcertType] = useState(false);
 	const [comedyType, setComedyType] = useState(false);
 	const [showType, setShowType] = useState(false);
@@ -33,11 +33,17 @@ const ConcertFilter = observer(() => {
 		if (theatreType) typesArray.push('theatre');
 		if (kidsType) typesArray.push('kids');
 		const fetchData = async () => {
-			const data = await getConcerts(typesArray, date, venue);
-			store.concerts = data;
+			const data = await getConcerts(typesArray, date, venue, page);
+			store.concerts = data.concerts;
+			setCount(data.count);
 		}
+		if (JSON.stringify(store.filters.typesArray) !== JSON.stringify(typesArray)) {
+			setPage(1);
+			store.filters = {page, typesArray};
+		} 
+		store.concerts = [];
 		fetchData();
-	}, [concertType, comedyType, showType, theatreType, kidsType, venue, date]);
+	}, [concertType, comedyType, showType, theatreType, kidsType, venue, date, page, setPage, setCount]);
 	
 
 	return (

@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../common/Header/Header';
-import { observer } from 'mobx-react-lite';
 import LogIn from './LogIn/LogIn';
 import SignUp from './SignUp/SignUp';
-import { store } from '../../store/UserStore';
 
-const AuthPage = observer(() => {
+const AuthPage = () => {
+const [isLogin, setIsLogin] = useState(true);
+
     return (
         <div>
             <Header isAuth={true}/>
-            {store.isLogin ? <LogIn /> : <SignUp />}
+            {isLogin ? <LogIn changeIsLogin={setIsLogin} /> : <SignUp changeIsLogin={setIsLogin} />}
         </div>
     );
-})
+};
 
 export default AuthPage;

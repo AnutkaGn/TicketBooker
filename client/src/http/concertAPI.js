@@ -1,7 +1,7 @@
 import { $host } from "./index"
 
-export const getConcerts = async (type, dateTime, venue) => {
-    const {data} = await $host.get('concert', {params: {type, dateTime, venue}});
+export const getConcerts = async (type, dateTime, venue, page=1) => {
+    const {data} = await $host.get('concert', {params: {type, dateTime, venue, page}});
     return data;
 }
 

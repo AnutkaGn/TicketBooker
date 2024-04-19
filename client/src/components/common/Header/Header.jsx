@@ -1,8 +1,10 @@
 import React from 'react';
 import './header.css'
 import Drawer from './Drawer/Drawer';
+import { observer } from 'mobx-react-lite';
+import { store } from '../../../store/UserStore';
 
-const Header = ({isAuth}) => {
+const Header = observer(({isAuth}) => {
     let style = {};
     if (isAuth){
         style = {justifyContent: "center"}
@@ -16,12 +18,12 @@ const Header = ({isAuth}) => {
             </div>
             {!isAuth &&
             <div className='box-user-basket'>
-                <a href="/auth"><img className='box-user-basket__button' style={{marginTop: "2px"}} src="assets/user.png" alt="user" /></a>
-                <a href="/basket"><img className='box-user-basket__button' style={{marginBottom: "2px"}} src="assets/backet.png" alt="backet"/></a>
+                <a href={ store.isLogin ? "/user" : "/auth" }><img className='box-user-basket__button' style={{marginTop: "2px"}} src="assets/user.png" alt="user" /></a>
+                <a href={ store.isLogin ? "/basket" : "/auth" }><img className='box-user-basket__button' style={{marginBottom: "2px"}} src="assets/backet.png" alt="backet"/></a>
             </div>
             }
         </div>
     );
-}
+});
 
 export default Header;

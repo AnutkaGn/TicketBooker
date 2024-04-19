@@ -20,6 +20,7 @@ function _arrayBufferToBase64( buffer ) {
 const ConcertItem = ({concert}) => {
     const venue = venueConcert[concert.venue]?.address
     const type = typeConcert[concert.type]
+    const data = concert.dateTime?.slice(0, concert?.dateTime.length-5)
     return (
         <div className='concert-card'>
             <div className='concert-card__poster'>
@@ -30,7 +31,7 @@ const ConcertItem = ({concert}) => {
                 <p className='concert-card__name'>{concert.name}</p>
                 <p className='concert-card__type'>{type}</p>
                 <div className='concert-wrapper-venue-date'>
-                    <div className='concert-card__date'><span>{moment(concert.dateTime).locale('uk').format('D MMMM HH:mm')}</span></div>
+                    <div className='concert-card__date'><span>{moment(data).locale('uk').format('D MMMM HH:mm')}</span></div>
                     <p className='concert-card__venue'>{venue}</p>
                 </div>
                 <div className='concert-wrapper-price'>

@@ -46,6 +46,7 @@ const logInUser = async(req, res, next) =>{
         return res.status(500);
     }
 };
+
 const check = async(req, res) => {
     try {
         const token = generateToken(req.user);
@@ -53,8 +54,8 @@ const check = async(req, res) => {
     } catch (error) {
         return res.status(500);
     }
-
 }
+
 const addToTickets = async(req, res) =>{
     try{
         const { id } = req.body;

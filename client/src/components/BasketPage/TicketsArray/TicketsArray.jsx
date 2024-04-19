@@ -4,7 +4,6 @@ import TicketItem from './TicketItem/TicketItem';
 import { bookManyTickets, getUserTickets } from '../../../http/ticketAPI';
 
 
-
 const TicketsArray = () => {
     const [selectedTickets, setSelectedTickets] = useState([]);
     useEffect(() => {

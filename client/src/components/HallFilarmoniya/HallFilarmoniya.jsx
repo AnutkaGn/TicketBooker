@@ -4,6 +4,7 @@ import { createTicket, getTickets, deleteTicket, getTicketId, getTicketPrice } f
 import { addToTickets } from '../../http/userAPI';
 import { store } from '../../store/UserStore';
 // import Tooltip from './Tooltip';
+import { useNavigate } from 'react-router-dom';
 import './hallFilarmoniya.css';
 
 const HallFilarmoniya = observer(() => {
@@ -17,6 +18,7 @@ const HallFilarmoniya = observer(() => {
   const circleRef = useRef();
   // const wrapperRef = useRef();
   const id = store.aboutConcert._id;
+  const navigate = useNavigate();
   
   // Отримати заброньовані квитки
   // додати поле booked та reserved "true" та позначити ці місця сірим та червоним кольором
@@ -30,13 +32,15 @@ const HallFilarmoniya = observer(() => {
               circle.setAttribute('booked', true);
               circle.style.fill = '#a7a7a7';
             } 
-            else if (!store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
-              circle.setAttribute('reserved', true);
-              circle.style.fill = 'red';
-            } 
-            else if (store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
-              circle.style.fill = '#59ff00';
-            }return null
+            else if (store.isLogin) {
+              if (!store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+                circle.setAttribute('reserved', true);
+                circle.style.fill = 'red';
+              } 
+              else if (store.includesTicketId(_id) && circle.getAttribute('row') == row && circle.getAttribute('seat') == seat && circle.getAttribute('floor') == floor){
+                circle.style.fill = '#59ff00';
+              }
+            } return null
           });
         } return null
       });
@@ -46,6 +50,10 @@ const HallFilarmoniya = observer(() => {
 
 
   const choosePlace = async(target) => {
+    if(!store.isLogin) {
+      navigate("/auth");
+      return;
+    }
     //Перевірка чи заброньований, чи зарезервований квиток
     if (!target.getAttribute('booked') && !target.getAttribute('reserved')){
       //Формування квитка без ціни та ID 
@@ -59,11 +67,12 @@ const HallFilarmoniya = observer(() => {
       const ticketId = await getTicketId(ticket);
       const concertPrices = store.aboutConcert.price;
       if(!ticketId.message) {
+        console.log(ticketId)
         ticket._id = ticketId;
         //Перевірка чи є даний квиток в сховищі
         if (store.includesTicketToBook(ticket) || store.includesTicketId(ticket._id)){
           ticket.price = await getTicketPrice(ticket._id);
-          switch(ticket.price){
+          switch(String(ticket.price)){
             case concertPrices[7] : target.style.fill = 'rgb(156, 17, 66)'; //червоний
               break;
             case concertPrices[6] : target.style.fill = 'rgb(207, 89, 207)'; //рожевий
@@ -83,15 +92,14 @@ const HallFilarmoniya = observer(() => {
           }
           
           //Видалити квиток з бази даних та оновити масив квитків у користувача
-          const {tickets} = await deleteTicket(ticket._id);
-          store.userTickets = tickets;
-          store.deleteTicket(ticket);
+          const {deletedTicket} = await deleteTicket(ticket._id);
+          store.deleteTicket(deletedTicket);
         }
       }
       else {
           //Формування ціни
           let price;
-          switch(target.style.fill){
+          switch(target.getAttribute("style").fill){
             case 'rgb(156, 17, 66)': price = concertPrices[7]; //червоний
               break;
             case 'rgb(207, 89, 207)': price = concertPrices[6]; //рожевий
@@ -111,7 +119,7 @@ const HallFilarmoniya = observer(() => {
           }
           ticket.price = price;
           //Змінити колір місця (обраного квитка) на зелений
-          target.style.fill = '#59ff00';
+          target.getAttribute("style").fill = '#59ff00';
           //Створити квиток в базі даних
           const data = await createTicket(ticket);
           //Додати в масив квитків користувача
@@ -134,7 +142,7 @@ const HallFilarmoniya = observer(() => {
     // setSeat(event.target.getAttribute("seat"))
     // setRow(event.target.getAttribute("row"))
     // setFloor(event.target.getAttribute("floor"))
-    // setColor(event.target.style.fill)
+    // setColor(event.target.getAttribute("style").fill)
     event.target.setAttribute('r', '2')
     event.target.style.stroke = 'yellow'
     event.target.style.strokeWidth = '0.5px'

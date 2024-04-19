@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import moment from 'moment';
 import { observer } from 'mobx-react-lite';
 import { getAboutConcert } from '../../../../http/concertAPI';
 import { deleteTicket } from '../../../../http/ticketAPI';
@@ -7,6 +6,9 @@ import { check } from '../../../../http/userAPI';
 import { floorLocalization, venueConcert } from '../../../../consts';
 import { store } from '../../../../store/UserStore';
 import './ticketItem.css';
+import moment from 'moment-timezone';
+
+  
 
 const TicketItem = observer(({ticket, func}) => {
     const [concert, setConcert] = useState('');
@@ -33,6 +35,7 @@ const TicketItem = observer(({ticket, func}) => {
     }
     const floor = floorLocalization[ticket.floor]
     const venue = venueConcert[concert?.venue]?.hall
+    const data = concert?.dateTime?.slice(0, concert?.dateTime.length-5)
     return (
        <div style={{display:'flex', flexDirection: 'column'}}>
             <div className='basket-item-wrapper'>
@@ -40,7 +43,7 @@ const TicketItem = observer(({ticket, func}) => {
                 <div className='basket-item__main-information'>
                     <p className='main-information__floor-row-seat'> {floor}, Ряд: {ticket.row}, Місце: {ticket.seat}</p>
                     <p className='main-information__name'>{concert?.name}</p>
-                    <p className='main-information__date-venue'>{moment(concert?.dateTime).format('D MMMM HH:mm')}. {venue}</p>
+                    <p className='main-information__date-venue'>{moment(data).tz('Europe/Kyiv').format('D MMMM HH:mm')}. {venue}</p>
                 </div>
                 <div className='basket-item__box-price'>
                     <p>{ticket.price} грн</p>

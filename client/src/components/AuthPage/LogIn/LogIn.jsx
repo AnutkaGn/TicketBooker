@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { store } from '../../../store/UserStore';
 import './logIn.css';
 
-const LogIn = observer(() => {
+const LogIn = observer(({changeIsLogin}) => {
     const loginRef = useRef();
     const passwordRef = useRef();
     const [isValid, setIsValid] = useState(true);
@@ -29,6 +29,7 @@ const LogIn = observer(() => {
                 store.email = email;
                 store.role = role;
                 store.userTickets = tickets;
+                store.isLogin = true;
                 navigate('/');
             } catch (error) {
                 console.error(error);
@@ -57,7 +58,7 @@ const LogIn = observer(() => {
                 </div>
                 <div className='logIn__box-signUp'>
                     <p>Немає облікового запису?</p>
-                    <p  className='logIn-signUp-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop: '-2px'}} onClick={() => store.isLogin = false}>Зареєструватися</p>
+                    <p  className='logIn-signUp-button' style={{textDecoration: 'underline', fontSize: '17px', cursor: 'pointer', marginTop: '-2px'}} onClick={() => changeIsLogin(false)}>Зареєструватися</p>
                 </div>
             </div>
         </div>

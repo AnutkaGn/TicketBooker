@@ -4,12 +4,13 @@ class UserStore{
     constructor(){
         this._concerts = [];
         this._aboutConcert = {};
-        this._isLogin = true;
+        this._isLogin = false;
         this._login = '';
         this._email = '';
         this._role = '';
         this._ticketsToBook = [];
         this._userTickets = [];
+        this._filters = { page: 1, typesArray: [] };
         makeAutoObservable(this);
     }
     get concerts(){
@@ -59,6 +60,12 @@ class UserStore{
     }
     set ticketsToBook(value){
         this._ticketsToBook = value
+    }
+    get filters() {
+        return this._filters;
+    }
+    set filters(value) {
+        this._filters = value;
     }
     includesTicketToBook(ticket){
         return JSON.parse(JSON.stringify(this._ticketsToBook)).some(ticketToBook => ticket.row === ticketToBook.row && ticket.seat === ticketToBook.seat && ticket.floor === ticketToBook.floor)
