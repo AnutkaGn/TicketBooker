@@ -20,7 +20,9 @@ const ConcertsArray = observer(() => {
                 {
                     store.concerts.length ?  
                     concerts : (
-                        <CircularProgress color='yellow'/>
+                        <div style={{marginBottom: "30px"}}>
+                            <CircularProgress color='yellow'/>
+                        </div>
                     )
                 }
             </div>

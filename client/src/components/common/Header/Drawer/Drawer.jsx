@@ -11,8 +11,8 @@ const Drawers = () => {
 	};
 	return (
 		<>
-			<img className='header__button' src="assets/button.svg" alt="button" onClick={showDrawer}/>
-			<Drawer title="Basic Drawer" placement="left" onClose={onClose} open={open} width={450}>
+			<img className='header__button' src="assets/button.svg" alt="button" onClick={open ? onClose : showDrawer}/>
+			<Drawer title="Basic Drawer" placement="left" onClose={onClose} open={open} width={450} zIndex={0}>
 				<p>Some contents...</p>
 				<p>Some contents...</p>
 				<p>Some contents...</p>

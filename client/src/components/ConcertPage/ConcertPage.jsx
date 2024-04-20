@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../common/Header/Header';
+import Footer from '../common/Footer/Footer';
 import AboutConcert from './AboutConcert/AboutConcert';
 import { useParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
@@ -49,7 +50,7 @@ const ConcertPage = observer(() => {
                 
             </div>
             { priceTickets.length != 0 && <TicketsPriceSum priceTickets = {priceTickets}/>}
-           
+           <Footer/>
         </div>
     );
 });

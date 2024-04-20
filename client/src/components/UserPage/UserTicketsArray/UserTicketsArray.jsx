@@ -11,7 +11,6 @@ const UserTicket = () => {
         const fetchTickets = async () => {
             const data = await getUserTickets();
             const filterTickets = data.userTickets.filter(ticket => ticket.booked)
-            console.log(data)
             const tickets = await Promise.all(filterTickets.map(async (t) => {
                 const concertData = await getAboutConcert(t.concertId);
                 return {
@@ -23,7 +22,6 @@ const UserTicket = () => {
                 };
             }));
             setBookedTickets(tickets);
-            console.log(bookedTickets);
         }
         fetchTickets();
     }, [])    
