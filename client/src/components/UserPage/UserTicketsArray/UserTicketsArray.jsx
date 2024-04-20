@@ -5,6 +5,19 @@ import { getUserTickets } from '../../../http/ticketAPI';
 import { getAboutConcert } from '../../../http/concertAPI';
 import moment from 'moment';
 
+
+const LoadingPage = () =>{
+    return (
+        <div className='wrapper-loading-page'>
+            <div className="bouncing-loader">          
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    );
+} 
+
 const UserTicket = () => {
     const [bookedTickets, setBookedTickets] = useState([]);
     useEffect( () => {
@@ -18,22 +31,25 @@ const UserTicket = () => {
                     name: concertData.name,
                     venue: concertData.venue,
                     dateTime: concertData.dateTime,
-                    type: concertData.type
+                    type: concertData.type,
+                    image: concertData.image
                 };
             }));
             setBookedTickets(tickets);
         }
         fetchTickets();
-    }, [])    
-    return (
+    }, [])  
+    if (!bookedTickets.length) return( <LoadingPage/> )  
+    else return (
         <div>
-            <p className='user-page__text'>Ваші заброньовані квиточки чекають вас!</p>
+            <p className='user-page__text'>Заброньовані квиточки</p>
             {bookedTickets.filter(ticket => moment(ticket.dateTime) >= moment()).map(t => (
                 <UserTicketItem key={t._id} ticket={t}/>
             ))}
             <p className='user-page__text'>Спогади! Ви відвідували ці заходи</p>
             {bookedTickets.filter(ticket => moment(ticket.dateTime) <= moment()).map(t => (
-                <UserTicketItem key={t._id} ticket={t}/>
+                <div style={{backgroundColor: 'black', opacity:'0.7'}}><UserTicketItem key={t._id} ticket={t}/></div>
+                
             ))}
         </div> 
     );

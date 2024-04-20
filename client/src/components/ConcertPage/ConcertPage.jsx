@@ -14,7 +14,21 @@ import { getUserTickets } from '../../http/ticketAPI';
 import { store } from '../../store/UserStore';
 import './concertPage.css';
 
-
+const LoadingPage = () =>{
+    return (
+        <div className='wrapper-loading-page'>
+            <div className='loading-page__box-logo-text'>            
+                <img className='loading-page__logo' src="assets/logo.png" alt="logo"/>
+                <p className='loading-page__text' style={{paddingRight:20}}>Ticket.che</p>
+            </div>
+            <div className="bouncing-loader">          
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    );
+} 
 
 const ConcertPage = observer(() => {
     const {id} = useParams();
@@ -35,7 +49,7 @@ const ConcertPage = observer(() => {
         fetchTickets();   
     }, [store.userTickets]);
     
-    if (!Object.values(store.aboutConcert).length) return(<p>Завантаження...</p>)
+    if (!Object.values(store.aboutConcert).length) return(<LoadingPage/>)
     else return (
         <div className='wrapper-concert-page'>
             <Header/>

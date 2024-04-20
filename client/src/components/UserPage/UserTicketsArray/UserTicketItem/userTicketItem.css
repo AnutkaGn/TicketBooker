@@ -1,53 +1,78 @@
 .user-ticket-card{
     display: flex;
     flex-direction: row;
-    align-items: center;
     margin-bottom: 45px;
-    width: 1008px;
-    height: 180px;
+    width: 850px;
+    height: 200px;
     background-color: #FDF9F6;
-    border-radius: 10px;
-    border: 1px solid #B4ADA9;
-    filter: drop-shadow(1px 3px 4px rgba(0, 0, 0, 0.20));
+    border: none;
 }
-.user-ticket-card__date{
-    display: flex;
-    flex-direction: column;
-    margin: 0 29px;
-    color: #000;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 400;
+
+.user__image-poster{
+    height: 160px;
+    margin-left: 40px;
+    align-self: center;
 }
-.user-ticket-card > img{
-    height: 180px;
+.user__image-ticket{
+    height: 100px;
 }
 .user-ticket-wrapper-information{
     display: flex;
     flex-direction: column;
-    width: 680px;
-    margin-left: 30px;
+    width: 520px;
+    margin-left: 50px;
+    max-height: 200px;
 }
 .user-ticket-card__floor-row-seat{
     color: #000;
-    font-size: 18px;
-    margin-top: 30px;
+    font-family: "Golca Light";
+    font-size: 15px;
+    margin-top: 20px;
+    font-weight: 700;
+}
+.user-ticket-card__date{
+    font-family: "Golca Light";
+    color: #000;
+    font-size: 14px;
+    font-weight: 400;
+    margin-top: -5px;
 }
 .user-ticket-card__name{
-    color: #000;
-    font-family: "Roboto Slab";
+    color: #4C382C;
+    font-family: 'Vinnytsia Sans';
     font-size: 20px;
     font-weight: 700;
-    margin-top: 0px;
+    margin-top: 5px;
 }
 .user-ticket-card__type{
-    color: #000;
+    color: #FFB800;
+    font-family: 'Vinnytsia Sans';
     font-size: 13px;
     margin-top: -20px;
 }
 .user-ticket-card__venue{
     color: #000;
-    font-size: 16px;
+    font-family: "Golca Light";
+    font-size: 14px;
     font-weight: 400;
-    margin-bottom: 30px;
+    margin-top: 5px;
+}
+.user-ticket-card__place{
+    color: #000;
+    font-family: "Golca Light";
+    font-size: 14px;
+    font-weight: 400;
+    margin-top: -5px;
+}
+.user-ticket-card__dots{
+    display: flex;
+    flex-direction: column;
+    height: 200px;
+}
+.user-ticket-card__dots > div{
+    background-color: #ad998c;
+    height: 30px;
+    width: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }

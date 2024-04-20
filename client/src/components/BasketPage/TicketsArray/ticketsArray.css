@@ -5,7 +5,8 @@
     height: auto;
     background-color: #FDF9F6;
     margin-top: 120px;
-    padding-top: 15px;
+    padding-top: 20px;
+    min-height: 250px;
 }
 .basket-tickets__box-button-price{
     display: flex;
@@ -32,4 +33,14 @@
     font-size: 24px;
     font-weight: 700;
 }
-
+.wrapper-basket-empty{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Vinnytsia Sans';
+    color: #4C382C;
+    font-size: 25px;
+    font-weight: 700;
+    height: 100%;
+}
