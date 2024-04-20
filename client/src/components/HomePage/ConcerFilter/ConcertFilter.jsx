@@ -24,7 +24,7 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 		{ value: "DruzhbaNarodiv", label: 'ПК «Дружба народів»'},
 		{ value: "Filarmoniya", label: 'Черкаська обласна філармонія'},
 		{ value: "Dramteatr", label: 'Український музично-драматичний театр імені Т. Г. Шевченка'},
-	]	
+	]	        
 	useEffect(() => {
 		let typesArray = [];
 		if (concertType) typesArray.push('concert');
@@ -33,6 +33,9 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 		if (theatreType) typesArray.push('theatre');
 		if (kidsType) typesArray.push('kids');
 		const fetchData = async () => {
+			if (!date.length){
+				setDate(new Date().toString()) 
+			}
 			const data = await getConcerts(typesArray, date, venue, page);
 			store.concerts = data.concerts;
 			setCount(data.count);

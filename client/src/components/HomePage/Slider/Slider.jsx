@@ -1,50 +1,67 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import './slider.css';
+import { getConcerts } from '../../../http/concertAPI';
+import { observer } from 'mobx-react-lite';
+import { store } from '../../../store/UserStore';
+import { Skeleton } from '@mui/material';
+import { arrayBufferToBase64 } from '../../../consts';
+import { useNavigate } from 'react-router-dom';
+
 
 const responsive = {
     desktop: {
-      breakpoint: { max: 3000, min: 1024 },
-      items: 4,
-      slidesToSlide: 4, // optional, default to 1.
-    },
+		breakpoint: { max: 3000, min: 1024 },
+		items: 4,
+		slidesToSlide: 4, // optional, default to 1.
+	},
     tablet: {
-      breakpoint: { max: 1024, min: 768 },
-      items: 3,
-      slidesToSlide: 3, // optional, default to 1.
+		breakpoint: { max: 1024, min: 768 },
+		items: 3,
+		slidesToSlide: 3, // optional, default to 1.
     },
     mobile: {
-      breakpoint: { max: 767, min: 464 },
-      items: 2,
-      slidesToSlide: 1, // optional, default to 1.
+		breakpoint: { max: 767, min: 464 },
+		items: 2,
+		slidesToSlide: 1, // optional, default to 1.
     },
-  };
-  const sliderImageUrl = [
-    //First image url
-    {
-      url: "https://i2.wp.com/www.geeksaresexy.net/wp-content/uploads/2020/04/movie1.jpg?resize=600%2C892&ssl=1",
-    },
-    {
-      url: "https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/best-kids-movies-2020-call-of-the-wild-1579042974.jpg?crop=0.9760858955588091xw:1xh;center,top&resize=480:*",
-    },
-    //Second image url
-    {
-      url: "https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/best-movies-for-kids-2020-sonic-the-hedgehog-1571173983.jpg?crop=0.9871668311944719xw:1xh;center,top&resize=480:*",
-    },
-    //Third image url
-    {
-      url: "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQS82ET2bq9oTNwPOL8gqyoLoLfeqJJJWJmKQ&usqp=CAU",
-    },
-  
-    //Fourth image url
-  
-    {
-      url: "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTdvuww0JDC7nFRxiFL6yFiAxRJgM-1tvJTxA&usqp=CAU",
-    },
-  ];
+};
 
-const Slider = () => {
+const SkeletonArea = () => {
+	return (
+		<div className="slider">
+			<Skeleton animation={'wave'} variant={'rectangular'} width={220} height={300}/>
+		</div>
+	);
+};
+
+const skeletonArray = Array.from({ length: 4 }, (v, i) => <SkeletonArea key={i}/>);
+
+const SliderArea = ({id, image}) => {
+	const navigate = useNavigate();
+
+	const handleClick = () =>{
+		navigate(`/concert/${id}`)
+	}
+	return (
+		<div className="slider" onClick={() => handleClick()}>
+			<img src={`data:${image.mimetype};base64,${arrayBufferToBase64(image.buffer?.data)}`} alt="poster"/>
+		</div>
+	)
+}
+
+
+const Slider = observer(() => {
+	const fetchData = useCallback(async () => {
+		const data = await getConcerts(undefined, new Date().toString(), undefined, 1, 12);
+		store.sliderConcerts = data.concerts;
+	});
+	useEffect(() => {
+		fetchData();
+	}, []);
+
+	console.log(skeletonArray)
     return (
         <div className='parent'>
             <Carousel
@@ -56,16 +73,15 @@ const Slider = () => {
                 infinite={true}
                 partialVisible={false}
             >
-                {sliderImageUrl.map((imageUrl, index) => {
+				{!store.sliderConcerts.length ? skeletonArray : 
+				store.sliderConcerts.map(concert => {
                     return (
-                        <div className="slider" key={index}>
-                        <img src={imageUrl.url} alt="movie" />
-                        </div>
+                        <SliderArea id={concert._id} image={concert.image}/>
                     );
                 })}
             </Carousel>
         </div>
     );
-}
+});
 
 export default Slider;

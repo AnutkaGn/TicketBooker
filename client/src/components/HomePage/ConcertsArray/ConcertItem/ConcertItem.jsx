@@ -3,19 +3,8 @@ import moment from 'moment';
 import 'moment/locale/uk';
 import './concertItem.css';
 import { Link } from 'react-router-dom';
-import {typeConcert, venueConcert} from '../../../../consts';
+import {typeConcert, venueConcert, arrayBufferToBase64} from '../../../../consts';
 
-
-
-function _arrayBufferToBase64( buffer ) {
-    var binary = '';
-    var bytes = new Uint8Array( buffer );
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode( bytes[ i ] );
-    }
-    return window.btoa( binary );
-}
 
 const ConcertItem = ({concert}) => {
     const venue = venueConcert[concert.venue]?.address
@@ -25,7 +14,7 @@ const ConcertItem = ({concert}) => {
         <div className='concert-card'>
             <div className='concert-card__poster'>
                 <div className='background-of-picture'></div>
-                <img src={`data:${concert.image.mimetype};base64,${_arrayBufferToBase64(concert.image.buffer?.data)}`} alt="poster"/>
+                <img src={`data:${concert.image.mimetype};base64,${arrayBufferToBase64(concert.image.buffer?.data)}`} alt="poster"/>
             </div>
             <div className='concert-wrapper-information'>
                 <p className='concert-card__name'>{concert.name}</p>

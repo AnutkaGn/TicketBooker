@@ -11,6 +11,7 @@ class UserStore{
         this._ticketsToBook = [];
         this._userTickets = [];
         this._filters = { page: 1, typesArray: [] };
+        this._sliderConcerts = [];
         makeAutoObservable(this);
     }
     get concerts(){
@@ -66,6 +67,12 @@ class UserStore{
     }
     set filters(value) {
         this._filters = value;
+    }
+    get sliderConcerts() {
+        return this._sliderConcerts;
+    } 
+    set sliderConcerts(value) {
+        this._sliderConcerts = value;
     }
     includesTicketToBook(ticket){
         return JSON.parse(JSON.stringify(this._ticketsToBook)).some(ticketToBook => ticket.row === ticketToBook.row && ticket.seat === ticketToBook.seat && ticket.floor === ticketToBook.floor)

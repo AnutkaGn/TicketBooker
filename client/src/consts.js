@@ -31,3 +31,14 @@ export const venueConcert = {
     'Filarmoniya' : {'hall': 'Черкаська обласна філармонія', 'address':  'Черкаси, вулиця Хрещатик, 196'},
     'Dramteatr' : {'hall': 'Український музично-драматичний театр імені Т. Г. Шевченка', 'address': 'Черкаси, бульвар Шевченка, 234'},
 }
+
+
+export const arrayBufferToBase64 = ( buffer ) => {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
