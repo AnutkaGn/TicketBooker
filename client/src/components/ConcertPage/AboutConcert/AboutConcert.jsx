@@ -20,11 +20,12 @@ const AboutConcert = observer(() => {
     const venue= venueConcert[store.aboutConcert.venue]?.address
     const venue_hall = venueConcert[store.aboutConcert.venue]?.hall
     const type = typeConcert[store.aboutConcert.type]
+    const date = store.aboutConcert.dateTime.slice(0, store.aboutConcert.dateTime.length-5)
     return (
         <div className='about-concert'>
             <img src={`data:${store.aboutConcert.image.mimetype};base64,${_arrayBufferToBase64(store.aboutConcert.image.buffer?.data)}`} alt="poster"/>
             <div className='about-concert__wrapper-information'>
-                <p className='about-concert__date'>{moment(store.aboutConcert.dateTime).locale('uk').format('D MMMM HH:mm')}</p>
+                <p className='about-concert__date'>{moment(date).locale('uk').format('D MMMM HH:mm')}</p>
                 <p className='about-concert__name'>{store.aboutConcert.name}</p>
                 <p className='about-concert__type'>{type}</p>
                 <p className='about-concert__description'>{store.aboutConcert.description}</p>

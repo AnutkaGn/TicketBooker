@@ -156,7 +156,7 @@ const HallDruzhbaNarodiv = observer(() => {
   }
   // {showTooltip && <Tooltip seat={seat} row={row} floor={floor} color={color} x={tooltipX} y={tooltipY} />}
   return (
-        <div>
+        <div className='wrapper-svg-druzhba-narodiv'>
             <svg
    width="210mm"
    height="297mm"

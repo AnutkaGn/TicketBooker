@@ -17,7 +17,9 @@ const TicketsArray = () => {
     const bookTickets = async(tickets) => {
         await bookManyTickets(tickets);
         setSelectedTickets(prev => prev.filter(ticket => !tickets.includes(ticket._id))) 
+        alert("Ваші квиткочки успішно заброньовані!")
     }
+
     if (!selectedTickets.length) return(<div className='basket-tickets'>Корзина пуста...</div>)
     else return (
         <div className='basket-tickets'>

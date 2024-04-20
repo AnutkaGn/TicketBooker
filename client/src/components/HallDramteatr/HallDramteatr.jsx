@@ -98,7 +98,7 @@ const HallDramteatr = observer(() => {
       else {
           //Формування ціни
           let price;
-          switch(target.getAttribute("style").fill){
+          switch(target.style.fill){
             case 'rgb(156, 17, 66)': price = concertPrices[7]; //червоний
               break;
             case 'rgb(207, 89, 207)': price = concertPrices[6]; //рожевий
@@ -118,7 +118,7 @@ const HallDramteatr = observer(() => {
           }
           ticket.price = price;
           //Змінити колір місця (обраного квитка) на зелений
-          target.getAttribute("style").fill = '#59ff00';
+          target.style.fill = '#59ff00';
           //Створити квиток в базі даних
           const data = await createTicket(ticket);
           //Додати в масив квитків користувача

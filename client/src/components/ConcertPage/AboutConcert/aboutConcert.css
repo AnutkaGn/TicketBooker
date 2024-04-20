@@ -5,6 +5,7 @@
     height: auto;
     justify-content: center;
     align-self: center;
+    min-height: 390px;
 }
 .about-concert > img{
     width: 240px;

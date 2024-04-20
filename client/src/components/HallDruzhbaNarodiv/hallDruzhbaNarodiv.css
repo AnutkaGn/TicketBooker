@@ -1,0 +1,14 @@
+.wrapper-svg-druzhba-narodiv{
+    position: relative;
+    overflow: hidden;
+    height: 730px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+.wrapper-svg-druzhba-narodiv > svg{
+    position: absolute;
+    left: 170px;
+
+}

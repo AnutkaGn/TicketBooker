@@ -60,8 +60,6 @@ const Slider = observer(() => {
 	useEffect(() => {
 		fetchData();
 	}, []);
-
-	console.log(skeletonArray)
     return (
         <div className='parent'>
             <Carousel
@@ -76,7 +74,7 @@ const Slider = observer(() => {
 				{!store.sliderConcerts.length ? skeletonArray : 
 				store.sliderConcerts.map(concert => {
                     return (
-                        <SliderArea id={concert._id} image={concert.image}/>
+                        <SliderArea id={concert._id} image={concert.image} key={concert._id}/>
                     );
                 })}
             </Carousel>

@@ -4,11 +4,22 @@ import Drawer from './Drawer/Drawer';
 import { observer } from 'mobx-react-lite';
 import { store } from '../../../store/UserStore';
 
+
 const Header = observer(({isAuth}) => {
     let style = {};
     if (isAuth){
         style = {justifyContent: "center"}
     }
+    const logOut = () => {
+        store.isLogin = false;
+        store.login = '';
+        store.email = '';
+        store.role = '';
+        store.userTickets = [];
+        store.ticketsToBook = [];
+        localStorage.setItem('token', '');
+    }
+
     return (
         <div className='header' style={style}>
             {!isAuth && <Drawer/>}
@@ -18,8 +29,15 @@ const Header = observer(({isAuth}) => {
             </div>
             {!isAuth &&
             <div className='box-user-basket'>
-                <a href={ store.isLogin ? "/user" : "/auth" }><img className='box-user-basket__button' style={{marginTop: "2px"}} src="assets/user.png" alt="user" /></a>
-                <a href={ store.isLogin ? "/basket" : "/auth" }><img className='box-user-basket__button' style={{marginBottom: "2px"}} src="assets/backet.png" alt="backet"/></a>
+                <a href={ window.location.pathname !== "/user" ? (store.isLogin ? "/user" : "/auth") : "/" }>
+                    <img className='box-user-basket__button' style={{marginTop: "2px"}} 
+                        src={window.location.pathname !== "/user" ? "assets/user.png" : "assets/exit.png"} alt="user"
+                        onClick={window.location.pathname === "/user" ? () => logOut() : null}
+                    />
+                </a>
+                <a href={ store.isLogin ? "/basket" : "/auth" }>
+                    <img className='box-user-basket__button' style={{marginBottom: "2px"}} src="assets/backet.png" alt="backet"/>
+                </a>
             </div>
             }
         </div>

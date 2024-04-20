@@ -32,13 +32,23 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 		if (showType) typesArray.push('show');
 		if (theatreType) typesArray.push('theatre');
 		if (kidsType) typesArray.push('kids');
+
 		const fetchData = async () => {
+			console.log(date)
+			console.log(date.length)
 			if (!date.length){
-				setDate(new Date().toString()) 
+				let startDate = new Date().toString()
+				console.log(startDate)
+				console.log(date)
+				const data = await getConcerts(typesArray, startDate, venue, page);
+				store.concerts = data.concerts;
+				setCount(data.count);
+			} else{
+				console.log(date)
+				const data = await getConcerts(typesArray, date, venue, page);
+				store.concerts = data.concerts;
+				setCount(data.count);
 			}
-			const data = await getConcerts(typesArray, date, venue, page);
-			store.concerts = data.concerts;
-			setCount(data.count);
 		}
 		if (JSON.stringify(store.filters.typesArray) !== JSON.stringify(typesArray)) {
 			setPage(1);
@@ -132,7 +142,7 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 							placeholder='Обери дату'
 							locale={locale}
 							minDate={dayjs()}
-							onChange={(value) => value? setDate(new Date(value.$d)): setDate("")}
+							onChange={(value) => value ? setDate(new Date(value.$d).toString()) : setDate("")}
 						/>
 					</ConfigProvider>
 				</div>

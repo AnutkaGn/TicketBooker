@@ -1,0 +1,13 @@
+.wrapper-svg-dramteatr{
+    position: relative;
+    overflow: hidden;
+    height: 660px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.wrapper-svg-dramteatr > svg{
+    position: absolute;
+    left: 100px;
+    top: -20px;
+}

@@ -7,6 +7,7 @@ import { floorLocalization, venueConcert } from '../../../../consts';
 import { store } from '../../../../store/UserStore';
 import './ticketItem.css';
 import moment from 'moment-timezone';
+import { Skeleton } from 'antd';
 
   
 
@@ -36,7 +37,9 @@ const TicketItem = observer(({ticket, func}) => {
     const floor = floorLocalization[ticket.floor]
     const venue = venueConcert[concert?.venue]?.hall
     const data = concert?.dateTime?.slice(0, concert?.dateTime.length-5)
-    return (
+
+    if (!concert) return (<div className='basket-item-wrapper'><Skeleton paragraph={{ rows: 2}}/></div>)
+    else return (
        <div style={{display:'flex', flexDirection: 'column'}}>
             <div className='basket-item-wrapper'>
                 <img className='basket-item__image-ticket' src="assets/ticket.png" alt="ticket"/>
