@@ -68,7 +68,7 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 				</div>
 				<div className='checkbox-one'>
 					<Checkbox id='comedy' checked={comedyType} onClick={() => setComedyType(prev => !prev)} sx={{color: '#FDF9F6', '&.Mui-checked': {color: '#FDF9F6'},'& .MuiSvgIcon-root': {fontSize: 24 }}}/>  
-					<label htmlFor="comedy">Стенд-ап</label>
+					<label htmlFor="comedy">Комедія</label>
 				</div>
 				<div className='checkbox-one'>
 					<Checkbox id='show' checked={showType} onClick={() => setShowType(prev => !prev)} sx={{color: '#FDF9F6', '&.Mui-checked': {color: '#FDF9F6'},'& .MuiSvgIcon-root': {fontSize: 24 }}}/>

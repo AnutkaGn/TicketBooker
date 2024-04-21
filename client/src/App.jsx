@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route} from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
 import HomePage from './components/HomePage/HomePage';
 import UserPage from './components/UserPage/UserPage';
 import BasketPage from './components/BasketPage/BasketPage';
@@ -11,6 +11,8 @@ import { check } from './http/userAPI';
 import HallDruzhbaNarodiv from './components/HallDruzhbaNarodiv/HallDruzhbaNarodiv';
 import HallDramteatr from './components/HallDramteatr/HallDramteatr';
 import { store } from './store/UserStore';
+import AdminPanel from './components/AdminPanel/AdminPanel';
+
 
 const App = observer(() => {
   useEffect(() => {
@@ -41,6 +43,8 @@ const App = observer(() => {
           <Route path='/fila' element={ <HallFilarmoniya/> }/>
           <Route path='/druzhba' element={ <HallDruzhbaNarodiv/> }/>
           <Route path='/dram' element={ <HallDramteatr/> }/>
+          <Route path='/create' element={ <AdminPanel/> }/>
+          <Route path="*" element={<Navigate to="/"/>} />
         </Routes>
       </BrowserRouter>
     </div>

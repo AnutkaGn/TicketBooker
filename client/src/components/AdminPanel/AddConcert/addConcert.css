@@ -1,0 +1,134 @@
+.wrapper-add-concert{
+    display: flex;
+    flex-direction: column;
+    width: 908px;
+    min-height: 560px;
+    background-color: #FDF9F6;
+    margin-top: 120px;
+    padding: 20px 50px;
+}
+.add-concert__input-name{
+    width: 250px;
+    height: 40px;
+    font-size: 14px;
+    border: 1px solid #B4ADA9;
+    padding: 0 10px;
+    margin-top: 10px;
+    border-radius: 0;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.add-concert__input-name:focus{
+    border: 1.8px solid #4C382C;
+    border-radius: 0;
+}
+.add-concert__input-description{
+    width: 350px;
+    height: 100px;
+    font-size: 14px;
+    border: 1px solid #B4ADA9;
+    padding: 0 10px;
+    margin-top: 20px;
+    outline: #4C382C;
+    box-sizing: border-box;
+    max-width: 350px;
+    min-width: 350px;
+    min-height: 100px;
+    max-height: 300px;
+}
+.add-concert__input-description:focus{
+    border: 1.8px solid #4C382C;
+    border-radius: 0;
+}
+.add-concert__input-image{
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 250px;
+    height: 40px;
+    font-size: 14px;
+    border: 1px solid #B4ADA9;
+    padding: 0 10px;
+    margin-top: 10px;
+    border-radius: 0;
+    outline: none;
+    box-sizing: border-box;
+    background-color: white;
+   
+}
+.input-image-label{
+    display: flex;
+
+}
+.input-image-invis{
+    position: absolute;
+    width: 250px;
+    height: 40px;
+    opacity: 0;
+}
+.input-image__poster{
+    height: 70px;
+    margin-right: 10px;
+
+}
+.input-image__button-cancel{
+    height: 15px;
+    margin-left: 10px;
+}
+.add-concert__wrapper-price{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    height: 360px;
+    width: 450px;
+    margin-left: 140px;
+    border: 1px solid #B4ADA9;
+}
+.wrapper__price-block{
+    display: flex;
+    flex-direction: column;
+    margin: -20px 20px 0 40px;
+}
+.wrapper__hall{
+    margin: 0 20px 0 30px;
+}
+.price-block{
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+    height: 20px;
+    align-items: center;
+}
+.price-block > div{
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+.price-block > input{
+    width: 102px;
+    height: 30px;
+    font-size: 14px;
+    border: 1px solid #B4ADA9;
+    padding: 0 10px;
+    box-sizing: border-box;
+    outline: none;
+}
+.price-block > input:focus{
+    border: 1.8px solid #4C382C;
+    border-radius: 0;
+}
+
+.button-add-concert{
+    width: 180px;
+    height: 40px;
+    border: none;
+    background: #FFB800;
+    color: #FFF;
+    font-size: 20px;
+    font-weight: 400;
+    font-family: 'Vinnytsia Sans';
+    cursor: pointer;
+    margin-top: 50px;
+}
