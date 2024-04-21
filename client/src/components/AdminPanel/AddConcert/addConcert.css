@@ -55,7 +55,6 @@
     font-weight: 400;
     font-family: 'Vinnytsia Sans';
     cursor: pointer;
-    z-index: 9999;
 }
 .input-image-invis{
     position: absolute;

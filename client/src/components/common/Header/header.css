@@ -80,3 +80,9 @@
 .wrapper-drawer-text__text:hover{
     color: #FFB800;
 }
+.wrapper-drawer-text > p{
+    color: black;
+}
+.wrapper-drawer-text > p:hover{
+    color: #4C382C;
+}

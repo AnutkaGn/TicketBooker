@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Collapse } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { store } from '../../../../store/UserStore';
+import { Link } from 'react-router-dom';
 
 const Drawers = observer(() => {
 	const [open, setOpen] = useState(false);
@@ -59,13 +60,17 @@ const Drawers = observer(() => {
 				</div>	
 				<div className='drawer-line' style={{marginTop:30}}/> 
 					
-				{store.role == "ADMIN" ? (
-					<><div className='wrapper-drawer-text' style={{marginTop:10, marginLeft:20}}>
-						<img src="assets/plus.png" alt="add" width={20} height={20} style={{marginRight:10}}/>
-						<p>Додати захід</p>
-					</div>
-					<div className='drawer-line' style={{marginTop:5}}/></>
-				) : null}
+				{store.role === "ADMIN" && (
+					<>
+						<Link to="/create" className='drawer-line'>
+							<div className='wrapper-drawer-text' style={{marginTop:10, marginLeft:20, cursor:'pointer', width:160}}>
+							<img src="assets/plus.png" alt="add" width={20} height={20} style={{marginRight:10}}/>
+							<p>Додати захід</p>
+							</div>
+						</Link>
+						<div className='drawer-line' style={{marginTop:10}}/>
+					</>
+				)}
 			</Drawer>
 		</div>
 	);
