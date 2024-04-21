@@ -50,3 +50,33 @@
     cursor: pointer;
 
 }
+.drawer-line{
+    width: 90%;
+    height: 1px;
+    background: #FFB800;
+}
+.wrapper-drawer{
+    font-size: 16px;
+    font-weight: 400;
+    font-family: "Golca Light"; 
+}
+.wrapper-drawer-text{
+    display: flex;
+    flex-direction: row;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Golca Light'; 
+    align-items: center;
+}
+.wrapper-drawer-text__image{
+    margin-right: 15px;
+}
+.wrapper-drawer-text__text{
+    color: black;
+    font-size: 14px;
+
+}
+.wrapper-drawer-text__text:hover{
+    color: #FFB800;
+}

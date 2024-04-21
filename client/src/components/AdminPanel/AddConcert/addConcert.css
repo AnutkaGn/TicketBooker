@@ -1,11 +1,11 @@
 .wrapper-add-concert{
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     width: 908px;
     min-height: 560px;
     background-color: #FDF9F6;
     margin-top: 120px;
-    padding: 20px 50px;
+    padding: 40px 50px 20px 50px;
 }
 .add-concert__input-name{
     width: 250px;
@@ -13,7 +13,6 @@
     font-size: 14px;
     border: 1px solid #B4ADA9;
     padding: 0 10px;
-    margin-top: 10px;
     border-radius: 0;
     outline: none;
     box-sizing: border-box;
@@ -28,7 +27,7 @@
     height: 100px;
     font-size: 14px;
     border: 1px solid #B4ADA9;
-    padding: 0 10px;
+    padding: 7px 10px;
     margin-top: 20px;
     outline: #4C382C;
     box-sizing: border-box;
@@ -45,36 +44,56 @@
     display: flex;
     align-items: center;
     position: relative;
-    width: 250px;
+    justify-content: center;
+    width: 180px;
     height: 40px;
     font-size: 14px;
-    border: 1px solid #B4ADA9;
-    padding: 0 10px;
-    margin-top: 10px;
+    margin-top: 20px;
     border-radius: 0;
-    outline: none;
-    box-sizing: border-box;
-    background-color: white;
-   
-}
-.input-image-label{
-    display: flex;
-
+    background-color: #4C382C;
+    color: #FFF;
+    font-weight: 400;
+    font-family: 'Vinnytsia Sans';
+    cursor: pointer;
+    z-index: 9999;
 }
 .input-image-invis{
     position: absolute;
-    width: 250px;
+    width: 180px;
     height: 40px;
-    opacity: 0;
+    visibility: hidden;
+}
+.input-image-label{
+    cursor: pointer;
+}
+.box-chosen-poster{
+    width: 298px;
+    height: 100px;
+    margin-top: 20px;
+    position: relative;
+    border: 1px solid #B4ADA9;
+    background-color: #FFF;
+    display: flex;
+    align-items: center;
+    
 }
 .input-image__poster{
-    height: 70px;
-    margin-right: 10px;
+    height: 80px;
+    margin-right: 20px;
+    margin-left: 20px;
 
 }
+.chosen-poster__text{
+    font-size: 16px;
+    font-weight: 400;
+}
 .input-image__button-cancel{
-    height: 15px;
-    margin-left: 10px;
+    height: 12px;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    cursor: pointer;
+
 }
 .add-concert__wrapper-price{
     display: flex;
@@ -83,8 +102,8 @@
     background-color: white;
     height: 360px;
     width: 450px;
-    margin-left: 140px;
     border: 1px solid #B4ADA9;
+    margin-left: 100px;
 }
 .wrapper__price-block{
     display: flex;
@@ -130,5 +149,10 @@
     font-weight: 400;
     font-family: 'Vinnytsia Sans';
     cursor: pointer;
-    margin-top: 50px;
+    margin-left: 371px;
+    margin-top: 65px;
+}
+
+.price-block__hall{
+    width: 200px;
 }

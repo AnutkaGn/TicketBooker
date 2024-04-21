@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/uk';
 import { arrayBufferToBase64 } from '../../../consts';
 import { createConcert } from '../../../http/concertAPI';
+import { Skeleton } from '@mui/material';
 
 
 
@@ -75,30 +76,29 @@ const AddConcert = () => {
     
     return (
         <div className='wrapper-add-concert'>
-            <div style={{display: 'flex', flexDirection: 'column'}}>
-                <input ref={name} className='add-concert__input-name' type="text" placeholder='Введіть назву заходу' required={true}/>
-                <textarea ref={description} className='add-concert__input-description' type="text" placeholder='Введіть опис заходу' maxLength={1000}/>
-            </div>
 
-            <div className='add-concert__input-image'>
-                <label className='input-image-label' htmlFor='poster'>{JSON.stringify(image).length-2 ? 'Обрати іншу афішу' : 'Додати афішу'}</label>
-                <input className='input-image-invis' type="file" id="poster" name="poster" accept="image/png, image/jpeg" onChange={e => uploadImage(e)} ref={poster}/>
-            </div>
-            <div style={{marginTop:10, height:80, width:250}}>
-
-            {JSON.stringify(image).length-2 ? (
-                <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                    <img className='input-image__poster' src={`data:${image.fileName.split('.')[1]};base64,${arrayBufferToBase64(image.buffer)}`} alt="poster" />
-                    <p>{image.fileName}</p>
-                    <img className='input-image__button-cancel' src="assets/cancel.png" alt="cansel" onClick={() => {setImage({})
-                poster.current.value = null}}/>
+            <div style={{display:'flex', flexDirection:'column'}}>
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                    <input ref={name} className='add-concert__input-name' type="text" placeholder='Введіть назву заходу' required={true}/>
+                    <textarea ref={description} className='add-concert__input-description' type="text" placeholder='Введіть опис заходу' maxLength={1000}/>
                 </div>
-            ) : null}
-            </div>
-            
+                <div className='add-concert__input-image'>
+                    <label className='input-image-label' htmlFor='poster'>{JSON.stringify(image).length-2 ? 'Обрати іншу афішу' : 'Обрати афішу'}</label>
+                    <input className='input-image-invis' type="file" id="poster" name="poster" accept="image/png, image/jpeg" onChange={e => uploadImage(e)} ref={poster}/>
+                </div>
 
-            <div style={{display: 'flex', flexDirection:'row'}}>
-                <div style={{marginTop:'30px'}}>
+
+                {JSON.stringify(image).length-2 ? (
+                    <div className='box-chosen-poster'>
+                        <img className='input-image__poster' src={`data:${image.fileName.split('.')[1]};base64,${arrayBufferToBase64(image.buffer)}`} alt="poster" />
+                        <p className='chosen-poster__text'>{image.fileName}</p>
+                        <img className='input-image__button-cancel' src="assets/cancel.png" alt="cansel" onClick={() => {setImage({})
+                            poster.current.value = null}}/>                 
+                    </div>
+                ) : null}            
+
+            
+                <div>
                     <div style={{marginTop:20, width:300}}>
                         <Select
                             getValue={() => type}
@@ -184,7 +184,7 @@ const AddConcert = () => {
                             }}
                         >
                             <DatePicker
-                                style={{ borderRadius: 1, borderColor:"#B4ADA9", height: 40, backgroundColor: "white", width: 300, fontSize: "14px"}}
+                                style={{ borderRadius: 1, borderColor:"#B4ADA9", height: 40, backgroundColor: "white", width: 300, fontSize: "14px", marginBottom:'20px'}}
                                 variant="filled"
                                 showTime
                                 activeBorderColor="red"
@@ -196,8 +196,10 @@ const AddConcert = () => {
                             />
                         </ConfigProvider>
                     </div>
-                    <input className='button-add-concert' type="button" value={"Створити"} onClick={() => create()}/>
                 </div> 
+            </div>
+
+            <div style={{display:'flex', flexDirection:'column'}}>
                 <div className='add-concert__wrapper-price'>
                     <div className='wrapper__price-block'>
                         <div className='price-block'>
@@ -234,11 +236,14 @@ const AddConcert = () => {
                         </div>
                     </div>
                     <div className='wrapper__hall'>
-                        {venue === 'DruzhbaNarodiv' ? (<img src="assets/druzhbaNarodiv.png" alt="" />) : (<div style={{height: 300, width: 200, background: 'grey'}}></div>)}
-                        {venue === 'Filarmoniya' ? (<img src="assets/filarmoniya.png" alt="" />) : null}
-                        {venue === 'Dramteatr' ? (<img src="assets/dramteatr.png" alt="" />) : null}
-                    </div>
+                        {venue === 'DruzhbaNarodiv' && <img className='price-block__hall' src="assets/druzhbaNarodiv.png" alt="" />}
+                        {venue === 'Filarmoniya' && <img className='price-block__hall' src="assets/filarmoniya.png" alt="" />}
+                        {venue === 'Dramteatr' && <img className='price-block__hall' src="assets/dramteatr.png" alt="" />}
+                        {['DruzhbaNarodiv', 'Filarmoniya', 'Dramteatr'].every(item => item !== venue) && (
+                            <Skeleton animation={'wave'} variant={'rectangular'} width={200} height={300}/>)}
+                    </div> 
                 </div>
+                <input className='button-add-concert' type="button" value={"Створити"} onClick={() => create()}/>
             </div>
         </div>
     );
