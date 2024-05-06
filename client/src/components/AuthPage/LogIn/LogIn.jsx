@@ -53,7 +53,7 @@ const LogIn = observer(({changeIsLogin}) => {
                     {!isValid && <span style={{color: 'red', fontSize: '10px', marginTop: '3px', width: "270px", alignSelf: 'center'}} >Пароль повинен містити літери, цифри та один спеціальний символ (!, @, #, $, %, ^, &, *)</span>}
                 </div>
                 <div style={{display: "flex", flexDirection: "column", alignItems: "center", marginTop: '40px'}}>
-                    {error && <span style={{color: 'red', fontSize: '10px', marginBottom: '30px'}}>{error}</span>}
+                    {error && <span style={{color: 'red', fontSize: '10px', marginBottom: '30px'}}>Неправильний логін або пароль</span>}
                     <button onClick={() => handleClick()} className='logIn-button'>Увійти</button>
                 </div>
                 <div className='logIn__box-signUp'>

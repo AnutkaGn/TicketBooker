@@ -41,4 +41,30 @@
     font-family: 'Vinnytsia Sans';
     font-size: 18px;
     font-weight: 400;
+    width: 290px;
+}
+
+@media screen and (max-width: 1100px){
+    .filter__checkbox{
+        width: 88%;
+    }
+    .filter__box-place-date{
+        width: 88%;
+    }
+}
+
+@media screen and (max-width: 750px){
+    .filter__checkbox{
+        justify-content: space-between;
+        height: 45px;
+        font-size: 14px;
+    }
+    .filter__box-place-date{
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .box-date{
+        margin-top: 10px;
+    }
 }

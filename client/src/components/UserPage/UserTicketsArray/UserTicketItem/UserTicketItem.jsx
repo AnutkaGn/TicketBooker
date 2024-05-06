@@ -13,7 +13,7 @@ const UserTicketItem = ({ticket}) => {
     const type = typeConcert[ticket.type]
     return (
         <div className='user-ticket-card'>
-            <img className='user__image-poster'  src={`data:${ticket.image.mimetype};base64,${arrayBufferToBase64(ticket.image.buffer?.data)}`} alt="poster"/>
+            <img className='user__image-poster' src={`data:${ticket.image.mimetype};base64,${arrayBufferToBase64(ticket.image.buffer?.data)}`} alt="poster"/>
             <div className='user-ticket-wrapper-information'>
             <p className='user-ticket-card__floor-row-seat'>{floor}, Ряд: {ticket.row}, Місце: {ticket.seat}</p>
                 <p className='user-ticket-card__date'> {moment(date).locale('uk').format('D MMMM HH:mm')}</p>

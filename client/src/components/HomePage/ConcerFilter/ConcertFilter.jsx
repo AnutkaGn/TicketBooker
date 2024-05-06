@@ -80,18 +80,18 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 				</div>
 				<div className='checkbox-one'>
 					<Checkbox id='kids' checked={kidsType} onClick={() => setKidsType(prev => !prev)} sx={{color: '#FDF9F6', '&.Mui-checked': {color: '#FDF9F6'},'& .MuiSvgIcon-root': {fontSize: 24 }}}/>  
-					<label htmlFor="kids">Дітям</label>
+					<label style={{marginRight:8}} htmlFor="kids">Дітям</label>
 				</div>        
 			</div>
 
 			<div className='filter__box-place-date'>
-				<div>
+				<div style={{width:290}}>
 					<Select
 						getValue={() => venue}
 						onChange={value => setVenue(value?.value)}
 						options={options}
 						isClearable={true}
-						placeholder='Виберіть місце проведення'
+						placeholder='Обери місце'
 						theme={theme => ({
 						...theme,
 						borderRadius: 0,
@@ -108,7 +108,7 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 						control: (base, state) => ({
 							...base,
 							fontFamily: "Vinnytsia Sans",
-							fontSize: '16px',
+							fontSize: '14px',
 							height: "50px",
 							border: "none",
 							borderColor: state.isFocused ? "#4C382C" : null,
@@ -136,7 +136,7 @@ const ConcertFilter = observer(({page, setPage, setCount}) => {
 						}}
 					>
 						<DatePicker
-							style={{ borderRadius: 0, height: 50, backgroundColor: "#FDF9F6", width: 250, fontFamily: "Vinnytsia Sans", fontSize: "16px"}}
+							style={{ borderRadius: 0, height: 50, backgroundColor: "#FDF9F6", width: 290, fontFamily: "Vinnytsia Sans", fontSize: "17px"}}
 							variant="filled"
 							activeBorderColor="red"
 							placeholder='Обери дату'

@@ -1,6 +1,6 @@
 // getTickets, getTicketsById, createTicket, bookTicket, bookManyTickets, deleteTicket, deleteNotBookedTicket
 const ApiError = require('../error/ApiError');
-const Ticket = require('../schemas/ticketSchema');
+const Ticket = require('../models/ticketModel');
 const mongoose = require('mongoose')
 
 const getTickets = async (req, res, next) =>{

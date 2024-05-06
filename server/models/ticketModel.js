@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./userSchema');
+const User = require('./userModel');
 const { Schema } = mongoose;
 
 const ticketSchema = new Schema({

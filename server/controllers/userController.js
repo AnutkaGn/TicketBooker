@@ -1,6 +1,6 @@
 // signUpUser, logInUser, addToTickets, deleteFromTickets
 const ApiError = require('../error/ApiError');
-const User = require('../schemas/userSchema');
+const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt'); 
 

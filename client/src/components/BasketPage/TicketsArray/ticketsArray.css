@@ -44,3 +44,30 @@
     font-weight: 700;
     height: 100%;
 }
+
+@media screen and (max-width: 1050px){
+    .basket-tickets{
+        width: 90%;
+    }
+}
+@media screen and (max-width: 550px){
+    .basket-tickets__box-button-price > input{
+        width: 140px;
+        height: 37px;
+        border: none;
+        background: #FFB800;
+        color: #FFF;
+        font-size: 16px;
+        font-weight: 400;
+        font-family: 'Vinnytsia Sans';
+        margin-left: 10px;
+        cursor: pointer;
+    }
+    .basket-tickets__box-button-price > p{
+        font-family: 'Vinnytsia Sans';
+        color: #4C382C;
+        font-size: 18px;
+        font-weight: 700;
+        margin-left: 3px;
+    }
+}

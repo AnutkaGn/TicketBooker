@@ -1,13 +1,13 @@
 import React from 'react';
 import Header from '../common/Header/Header';
-import UserTicketsArray from './UserTicketsArray/UserTicketsArray'
+import UserTicketsArray from './UserTicketsArray/UserTicketsArray';
+import Footer from '../common/Footer/Footer';
 import './userPage.css';
 
 const UserPage = () => {
     return (
         <div className='wrapper-user-page'>
             <Header/>
-            <div style={{marginTop:'100px'}}></div>
             <UserTicketsArray/>
         </div>
     );

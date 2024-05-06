@@ -23,3 +23,24 @@
     color: #4C382C;
     margin-top: 8px;
 }
+
+@media screen and (max-width: 1100px) {
+    .wrapper-price-for-concert{
+        display: flex;
+        flex-direction: column;
+        min-width: 140px;
+        margin-left: 80px;
+        margin-top: 70px;
+    }
+}
+
+@media screen and (max-width: 750px){
+    .wrapper-price-for-concert{
+        flex-direction: row;
+        margin-left: 0px;
+        margin-top: 20px;
+    }
+    .wrapper__price-for-concert__box{
+        margin-left: 30px;
+    }
+}

@@ -41,14 +41,14 @@ const UserTicket = () => {
     }, [])  
     if (!bookedTickets.length) return( <LoadingPage/> )  
     else return (
-        <div>
+        <div style={{marginTop:80, }}>
             <p className='user-page__text'>Заброньовані квиточки</p>
             {bookedTickets.filter(ticket => moment(ticket.dateTime) >= moment()).map(t => (
                 <UserTicketItem key={t._id} ticket={t}/>
             ))}
             <p className='user-page__text'>Спогади! Ви відвідували ці заходи</p>
             {bookedTickets.filter(ticket => moment(ticket.dateTime) <= moment()).map(t => (
-                <div style={{backgroundColor: 'black', opacity:'0.7'}}><UserTicketItem key={t._id} ticket={t}/></div>
+                <div className='user-page__black-box' style={{backgroundColor: 'black', opacity:'0.7', width:'100%'}}><UserTicketItem key={t._id} ticket={t}/></div>
                 
             ))}
         </div> 

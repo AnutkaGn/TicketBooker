@@ -44,7 +44,6 @@
 }
 .box-user-basket__button{
     height: 30px;
-    
 }
 .box-user-basket > img{
     cursor: pointer;
@@ -85,4 +84,34 @@
 }
 .wrapper-drawer-text > p:hover{
     color: #4C382C;
+}
+
+@media screen and (max-width: 500px) {
+    .header__logo{
+        width: 30px;
+        height: 30px;
+    }
+    .header__text{
+        font-size: 25px;
+        margin-left: 10px;
+    }
+    .header__button{
+        width: 30px;
+        height: 30px;
+        margin-left: 40px;
+        cursor: pointer;
+    }
+    .box-user-basket{
+        margin-right: 20px;
+        width: 70px;
+    }
+    .box-user-basket__button{
+        height: 27px;
+        
+    }
+    .header__button{
+        width: 27px;
+        height: 27px;
+        margin-left: 30px;
+    }
 }

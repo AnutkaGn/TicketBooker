@@ -1,23 +1,22 @@
 
 .slider {
-    margin: 10px 20px;
+    margin: 0 20px 10px 20px;
     overflow: "hidden";
     padding: 2rem 0;
     cursor: pointer;
-  }
+}
   
-  .slider img {
-    width: 100%;
-  }
+.slider img {
+  width: 100%;
+}
   
-  .react-multi-carousel-list {
-    width: 1048px;
-    margin-top: 70px;
-  }
-  .parent {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    height: auto;
-  }
-  
+.react-multi-carousel-list {
+  width: 1048px;
+  margin-top: 80px;
+}
+.parent {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+}

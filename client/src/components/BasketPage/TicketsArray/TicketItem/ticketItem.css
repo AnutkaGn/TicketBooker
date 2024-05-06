@@ -53,12 +53,113 @@
     font-weight: 400;
     align-self: center;
     margin-left: 20px;
-
+    min-width: 80px;
 }
 .basket-line{
     display: flex;
-    width: 900px;
+    width: 90%;
     height: 1px;
     background: #FFB800;
     align-self: center;
+}
+
+@media screen and (max-width: 1050px){
+    .basket-item-wrapper{  
+        width: 90%;
+    }
+    .basket-item__image-ticket{
+        width: 50px;
+        height: 50px;
+        align-self: center;
+        margin: 0 2% 0 2%;
+    }
+    
+}
+@media screen and (max-width: 900px){
+    .basket-item-wrapper{  
+        width: 90%;
+    }
+    .basket-item__image-ticket{
+        width: 50px;
+        height: 50px;
+        align-self: center;
+        margin: 0 2% 0 2%;
+    }
+    .basket-item__box-price{
+        margin-left: 0px;
+    
+    }
+    .basket-item__main-information{
+        width: 430px;
+        margin-left: 10px;
+        margin-right: 2%;
+    }   
+    
+}
+@media screen and (max-width: 800px){
+    .basket-item-wrapper{  
+        width: 90%;
+    }
+    .basket-item__image-ticket{
+        width: 50px;
+        height: 50px;
+        margin: 0 2% 0 2%;
+    }
+    .basket-item__main-information{
+        width: 350px;
+        margin-left: 10px;
+        margin-right: 1%;
+    } 
+}
+@media screen and (max-width: 680px){
+    .basket-item-wrapper{  
+        width: 90%;
+    }
+    .basket-item__image-ticket{
+        width: 50px;
+        height: 50px;
+        margin: 0 2% 0 2%;
+    }
+    .basket-item__main-information{
+        width: 350px;
+        margin-left: 10px;
+        margin-right: 1%;
+    } 
+    .basket-item__image-cancel{
+        right: 0px;
+    }
+    .main-information__name{
+        font-size: 15px;
+    }
+    .main-information__floor-row-seat{
+        font-size: 13px;
+    }
+    .main-information__date-venue{
+        font-size: 13px; 
+    }
+}
+@media screen and (max-width: 540px){
+
+    .basket-item__main-information{
+        width: 300px;
+        margin-left: 10px;
+        margin-right: 1%;
+    } 
+    .basket-item__image-ticket{
+        width: 40px;
+        height: 40px;
+        margin: 0 1%;
+    }
+}
+@media screen and (max-width: 500px){
+
+    .basket-item__main-information{
+        width: 270px;
+        margin-left: -37px;
+        margin-right: 3px;
+    } 
+    .basket-item__image-ticket{
+        visibility: hidden;
+    }
+    
 }

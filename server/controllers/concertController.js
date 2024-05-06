@@ -1,6 +1,6 @@
 // getConcerts, getOneConcertById, createConcert, deleteConcert
 const ApiError = require('../error/ApiError');
-const Concert = require('../schemas/concertSchema');
+const Concert = require('../models/concertModel');
 
 const getConcerts = async(req, res) =>{
     try{

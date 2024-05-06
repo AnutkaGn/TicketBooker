@@ -67,3 +67,19 @@
     font-size: 24px;
     font-weight: 700;
 }
+
+@media screen and (max-width: 1150px) {
+    .about-concert{
+        flex-direction: column;
+        width: 85%;
+        align-items: center;
+    }
+    .about-concert__wrapper-information{
+        margin-top: 30px;
+        width: 90%;
+        margin-left: 0px;
+    }
+    .about-concert > img{
+        margin-top: 0;
+    }
+}

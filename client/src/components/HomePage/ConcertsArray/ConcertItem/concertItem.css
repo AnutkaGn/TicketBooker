@@ -4,10 +4,9 @@
     flex-direction: row;
     margin-bottom: 45px;
     width: 1008px;
-    height: 292px;
+    min-height: 292px;
     background-color: #FDF9F6;
 }
-
 .concert-card__poster{
     display: flex;
     position: relative;
@@ -88,7 +87,7 @@
     position: absolute;
     right: 0;
     width: 219px;
-    height: 292px;
+    min-height: 292px;
     border: none;
     background: #FFB800;
     cursor: pointer;
@@ -105,4 +104,117 @@
     position: absolute;
     transform: translateY(60%);
     right: 255px;
+}
+
+
+@media screen and (max-width: 1100px){
+    .concert-card{
+        width: 88%;
+    }
+    .concert-card__poster{
+        margin-left: 45px;
+    }
+    .concert-card__poster > img{
+        width: 140px;
+        height: 199px;
+    }
+    .background-of-picture{
+        width: 118px;
+        height: 167px;  
+    }
+    .concert-card__button-book{
+        width: 180px;
+    }
+    .concert-card__button-book > span{
+        font-size: 40px;
+    }
+    .concert-arrow{
+       visibility: hidden;
+    }
+}
+
+@media screen and (max-width: 970px){
+    .background-of-picture{
+        visibility: hidden; 
+    }
+    .concert-card{
+        min-height: 280px;
+    }
+    .concert-wrapper-information{
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 350px;
+        margin-left: 6%;
+    }
+    .concert-card__button-book{
+        width: 180px;
+        min-height: 280px;
+    }
+}
+@media screen and (max-width: 880px){
+    .background-of-picture{
+        visibility: hidden; 
+    }
+    .concert-card__button-book{
+        width: 180px;
+        min-height: 280px;
+    }
+    .concert-wrapper-price{
+        margin-top: 10px;
+        width: 200px;
+        margin-left: 20px;
+    }
+    .concert-card__button-book{
+        right: 30px;
+        bottom: 20px;
+        width: 150px;
+        min-height: 40px;
+    }
+    .concert-card__button-book > span{
+        font-size: 20px;
+    }
+}
+@media screen and (max-width: 710px){
+    .background-of-picture{
+        visibility: visible; 
+        width: 118px;
+        height: 167px;
+    }
+    .concert-card{
+        flex-direction: column;
+        margin-bottom: 45px;
+    }
+    .concert-card__button-book{
+        width: 180px;
+        min-height: 280px;
+    }
+    .concert-wrapper-price{
+        margin-left: 0;
+    }
+    .concert-card__button-book{
+        right: 30px;
+        bottom: 20px;
+        width: 150px;
+        min-height: 40px;
+    }
+    .concert-card__button-book > span{
+        font-size: 20px;
+    }
+    .concert-card__poster{
+        align-self: center;
+        margin-right: 70px;
+    }
+    .concert-wrapper-information{
+        width: 90%;
+    }
+    .concert-wrapper-price{
+        margin-left: 20px;
+    }
+    .concert-card__price{
+        font-size: 22px;
+    }
+    .concert-wrapper-venue-date{
+        margin-top: 10px;
+    }
 }

@@ -9,7 +9,6 @@ import HallFilarmoniya from '../HallFilarmoniya/HallFilarmoniya';
 import PriceForConcert from './PriceForConcert/PriceForConcert';
 import HallDramteatr from '../HallDramteatr/HallDramteatr';
 import HallDruzhbaNarodiv from '../HallDruzhbaNarodiv/HallDruzhbaNarodiv';
-import TicketsPriceSum from './TicketsPriceSum/TicketsPriceSum';
 import { getUserTickets } from '../../http/ticketAPI';
 import { store } from '../../store/UserStore';
 import './concertPage.css';
@@ -56,14 +55,12 @@ const ConcertPage = observer(() => {
             <div style={{height: '110px'}}></div>
             <AboutConcert/>
             <div className='concert-line'></div>
-            <div style={{display:'flex', flexDirection:'row'}}>
+            <div className='concert-page__wrapper-hall'>
                 <PriceForConcert/>
                 {store.aboutConcert.venue === 'Filarmoniya' ? <HallFilarmoniya /> : null}
                 {store.aboutConcert.venue === 'Dramteatr' ? <HallDramteatr /> : null}
                 {store.aboutConcert.venue ==='DruzhbaNarodiv' ? <HallDruzhbaNarodiv /> : null}
-                
             </div>
-            { priceTickets.length != 0 && <TicketsPriceSum priceTickets = {priceTickets}/>}
            <Footer/>
         </div>
     );

@@ -2,7 +2,7 @@
     position: relative;
     overflow: hidden;
     height: 660px;
-    width: 100%;
+    width: 900%;
     display: flex;
     justify-content: center;
 }
@@ -10,4 +10,44 @@
     position: absolute;
     left: 100px;
     top: -20px;
+}
+@media screen and (max-width: 1190px){
+    .wrapper-svg-dramteatr > svg{
+        left: -85px;
+    }
+}
+@media screen and (max-width: 1000px){
+    .wrapper-svg-dramteatr > svg{
+        left: -155px;
+        height: 890px;
+        top: -20px;
+        bottom: -200px;
+        background-color: antiquewhite;
+    }
+}
+@media screen and (max-width: 750px){
+    .wrapper-svg-dramteatr > svg{
+        left: -10%;
+        height: 800px;
+        background-color: rgb(169, 213, 253);
+    }
+}
+@media screen and (max-width: 640px){
+    .wrapper-svg-dramteatr > svg{
+        left: -20%;
+        height: 650px;
+        background-color: rgb(106, 139, 115);
+    }  
+}
+@media screen and (max-width: 560px){
+    .wrapper-svg-dramteatr > svg{
+        left: -35%;
+        background-color: rgb(45, 45, 45);
+    }  
+}
+@media screen and (max-width: 470px){
+    .wrapper-svg-dramteatr > svg{
+        left: -45%;
+        background-color: rgb(255, 187, 98);
+    }  
 }

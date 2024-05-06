@@ -3,9 +3,10 @@
     flex-direction: row;
     margin-bottom: 45px;
     width: 850px;
-    height: 200px;
+    min-height: 200px;
     background-color: #FDF9F6;
     border: none;
+    position: relative;
 }
 
 .user__image-poster{
@@ -21,7 +22,8 @@
     flex-direction: column;
     width: 520px;
     margin-left: 50px;
-    max-height: 200px;
+    min-height: 200px;
+    margin-bottom: 10px;
 }
 .user-ticket-card__floor-row-seat{
     color: #000;
@@ -68,11 +70,66 @@
     display: flex;
     flex-direction: column;
     height: 200px;
+    justify-content: space-around;
+    margin: 5px 0;
+    position: absolute;
+    right: 110px;
 }
 .user-ticket-card__dots > div{
     background-color: #ad998c;
     height: 30px;
     width: 10px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+
+}
+
+
+@media screen and (max-width: 950px){
+    .user-ticket-card{
+        width: 650px;
+    }
+    .user__image-poster{
+        height: 150px;
+        margin-left: 30px;
+        align-self: center;
+    }
+    .user-ticket-wrapper-information{
+        width: 450px;
+        margin-left: 30px;
+        margin-right: 10px;
+    }
+    .user-ticket-card__dots{
+        right: 80px;
+    }
+}
+@media screen and (max-width: 730px){
+    .user-ticket-card{
+        width: 470px;
+    }
+    .user__image-poster{
+        visibility: hidden;
+    }
+    .user-ticket-wrapper-information{
+        width: 400px;
+        margin-left: -120px;
+        margin-right: 0px;
+    }
+    .user-ticket-card__dots{
+        right: 50px;
+    }
+}
+@media screen and (max-width: 530px){
+    .user-ticket-card{
+        width: 400px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    .user__image-poster{
+        visibility: hidden;
+    }
+    .user-ticket-wrapper-information{
+        width: 300px;
+    }
+    .user-page__black-box{
+        max-width: 350px;
+    }
 }

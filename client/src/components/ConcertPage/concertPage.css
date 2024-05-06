@@ -12,7 +12,10 @@
     border: none;
     align-self: center;
 }
-
+.concert-page__wrapper-hall{
+    display: flex;
+    flex-direction: row;
+}
 .wrapper-loading-page{
     display: flex;
     flex-direction: row;
@@ -66,4 +69,13 @@
   
 .bouncing-loader > div:nth-child(3) {
     animation-delay: 0.4s;
+}
+
+@media screen and (max-width: 750px){
+    .concert-page__wrapper-hall{
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
 }
