@@ -1,4 +1,4 @@
-import { $authHost, $host } from "./index"
+import { $authHost, $host } from "./index.js"
 
 export const getConcerts = async (type, dateTime, venue, page=1, limit=5) => {
     const {data} = await $host.get('concert', {params: {type, dateTime, venue, page, limit}});

@@ -12,25 +12,36 @@ const generateToken = ({login, email, role, tickets}) =>{
     );
 };
 
-const signUpUser = async(req, res, next) =>{
-    try{
-        const {login, password, email, role} = req.body;
-        //Check if user already exists
-        const userEmail = await User.findOne({email});
+const signUpUser = async(req, res, next) => {
+    try {
+        const { login, password, email, role } = req.body;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[_!\-@#\$%\^&\*])(?=.{8,})/
+        if(!password.match(passwordRegex)){
+            return next(ApiError.badRequest("The password is invalid"));
+        }
+        const emailRegex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/
+        if(!email.match(emailRegex)){
+            return next(ApiError.badRequest("The email is invalid"));
+        }
+        // Check if user already exists
+        const userEmail = await User.findOne({ email });
         if (userEmail) return next(ApiError.badRequest("User with this email already exists"));
-        const userLogin = await User.findOne({login});
+        const userLogin = await User.findOne({ login });
         if (userLogin) return next(ApiError.badRequest("User with this login already exists"));
-        
+
         const hashedPassword = await bcrypt.hash(password, 5);
-        const newUser = await User.create({login, password: hashedPassword, email, role});
+        const newUser = await User.create({ login, password: hashedPassword, email, role });
         const token = generateToken(newUser);
-        return res.status(200).json({token});
-    }
-    catch (error){
+        return res.status(200).json({ token });
+    } catch (error) {
         console.error(error);
-        return res.status(500);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+
+
 
 const logInUser = async(req, res, next) =>{
     try{

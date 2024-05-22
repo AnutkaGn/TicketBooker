@@ -57,9 +57,7 @@ export const deleteTicket = async(id) =>{
 
 export const bookManyTickets = async(idArray) =>{
     try {
-        console.log(idArray)
         const {data} = await $authHost.put(`ticket?idArray=${idArray}`)
-        console.log(data);
         return data;
     } catch (error) {
         return error.response.data;

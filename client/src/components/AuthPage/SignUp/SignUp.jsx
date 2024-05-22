@@ -15,7 +15,7 @@ const SignUp = observer(({changeIsLogin}) => {
     const navigate = useNavigate();
     
     const checkEmail = () => {
-        const regexp = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
+        const regexp = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/
         if(emailRef.current.value.match(regexp)) setIsValidEmail(true);
         else setIsValidEmail(false);
     }

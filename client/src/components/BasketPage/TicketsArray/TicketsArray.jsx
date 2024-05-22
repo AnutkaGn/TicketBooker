@@ -26,7 +26,8 @@ const TicketsArray = () => {
                 <p>Кошик порожній...</p>
                 <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
                     <p style={{fontSize: 20, marginTop:'-5px', fontWeight: 400, paddingRight:5}}>За квиточками тобі</p>
-                    <a href="/" style={{fontSize: 23, marginTop:'-5px', fontWeight: 600, cursor:'pointer', color: '#FFB800', marginBottom: '20px'}}> сюди</a>
+                    <a href="/" style={{fontSize: 23, marginTop:'-5px', fontWeight: 600, 
+                            cursor:'pointer', color: '#FFB800', marginBottom: '20px'}}> сюди</a>
                 </div>
             </div>
         </div>

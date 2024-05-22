@@ -40,7 +40,8 @@ const HomePage = observer(() => {
                 }}
             >
                 <div style={{display: 'flex', width: "100%", justifyContent: "center"}}>
-                    <Pagination pageSize={5} total={count} hideOnSinglePage={true} current={page} onChange={current => setPage(current)} />
+                    <Pagination pageSize={5} total={count} hideOnSinglePage={true} 
+                    current={page} onChange={current => setPage(current)} />
                 </div>
             </ConfigProvider>
             <Footer/>
